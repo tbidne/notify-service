@@ -1,0 +1,251 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE TemplateHaskell #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-3"></span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- | Provides the 'PollInterval' type.</span><span>
+</span><span id="line-5"></span><span class="hs-comment">--</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Navi.Data.PollInterval</span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Navi.Data.PollInterval.html#PollInterval"><span class="hs-identifier">PollInterval</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="Navi.Data.PollInterval.html#pollIntervalOptDecoder"><span class="hs-identifier">pollIntervalOptDecoder</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="Navi.Data.PollInterval.html#toSleepTime"><span class="hs-identifier">toSleepTime</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.html"><span class="hs-identifier">Data.Text</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Time.Relative</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Rel</span></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Prelude.html"><span class="hs-identifier">Navi.Prelude</span></a></span><span>
+</span><span id="line-17"></span><span>
+</span><span id="line-18"></span><span class="hs-comment">-- | Represents how often to poll for service changes, in seconds.</span><span>
+</span><span id="line-19"></span><span class="hs-comment">--</span><span>
+</span><span id="line-20"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">newtype</span><span> </span><span id="PollInterval"><span class="annot"><a href="Navi.Data.PollInterval.html#PollInterval"><span class="hs-identifier hs-var">PollInterval</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkPollInterval"><span class="annot"><a href="Navi.Data.PollInterval.html#MkPollInterval"><span class="hs-identifier hs-var">MkPollInterval</span></a></span></span><span> </span><span class="hs-special">{</span><span id="%24sel%3AunPollInterval%3AMkPollInterval"><span class="annot"><span class="annottext">PollInterval -&gt; Natural
+</span><a href="Navi.Data.PollInterval.html#%24sel%3AunPollInterval%3AMkPollInterval"><span class="hs-identifier hs-var hs-var">unPollInterval</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-bignum-1.2/src/GHC.Num.Natural.html#Natural"><span class="hs-identifier hs-type">Natural</span></a></span><span class="hs-special">}</span><span>
+</span><span id="line-22"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679305076"><span id="local-6989586621679305080"><span class="annot"><span class="annottext">PollInterval -&gt; PollInterval -&gt; Bool
+forall (a :: OpticKind).
+(a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: PollInterval -&gt; PollInterval -&gt; Bool
+$c/= :: PollInterval -&gt; PollInterval -&gt; Bool
+== :: PollInterval -&gt; PollInterval -&gt; Bool
+$c== :: PollInterval -&gt; PollInterval -&gt; Bool
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Classes.html#Eq"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></a></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679305053"><span id="local-6989586621679305055"><span id="local-6989586621679305058"><span id="local-6989586621679305061"><span id="local-6989586621679305064"><span id="local-6989586621679305067"><span id="local-6989586621679305071"><span class="annot"><span class="annottext">Eq PollInterval
+PollInterval -&gt; PollInterval -&gt; Bool
+PollInterval -&gt; PollInterval -&gt; Ordering
+PollInterval -&gt; PollInterval -&gt; PollInterval
+forall (a :: OpticKind).
+Eq a
+-&gt; (a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+min :: PollInterval -&gt; PollInterval -&gt; PollInterval
+$cmin :: PollInterval -&gt; PollInterval -&gt; PollInterval
+max :: PollInterval -&gt; PollInterval -&gt; PollInterval
+$cmax :: PollInterval -&gt; PollInterval -&gt; PollInterval
+&gt;= :: PollInterval -&gt; PollInterval -&gt; Bool
+$c&gt;= :: PollInterval -&gt; PollInterval -&gt; Bool
+&gt; :: PollInterval -&gt; PollInterval -&gt; Bool
+$c&gt; :: PollInterval -&gt; PollInterval -&gt; Bool
+&lt;= :: PollInterval -&gt; PollInterval -&gt; Bool
+$c&lt;= :: PollInterval -&gt; PollInterval -&gt; Bool
+&lt; :: PollInterval -&gt; PollInterval -&gt; Bool
+$c&lt; :: PollInterval -&gt; PollInterval -&gt; Bool
+compare :: PollInterval -&gt; PollInterval -&gt; Ordering
+$ccompare :: PollInterval -&gt; PollInterval -&gt; Ordering
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Classes.html#Ord"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></a></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679305042"><span id="local-6989586621679305044"><span id="local-6989586621679305050"><span class="annot"><span class="annottext">Int -&gt; PollInterval -&gt; ShowS
+[PollInterval] -&gt; ShowS
+PollInterval -&gt; String
+forall (a :: OpticKind).
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [PollInterval] -&gt; ShowS
+$cshowList :: [PollInterval] -&gt; ShowS
+show :: PollInterval -&gt; String
+$cshow :: PollInterval -&gt; String
+showsPrec :: Int -&gt; PollInterval -&gt; ShowS
+$cshowsPrec :: Int -&gt; PollInterval -&gt; ShowS
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Show.html#Show"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></a></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679305015"><span id="local-6989586621679305019"><span id="local-6989586621679305023"><span id="local-6989586621679305027"><span id="local-6989586621679305031"><span id="local-6989586621679305035"><span id="local-6989586621679305039"><span class="annot"><span class="annottext">Integer -&gt; PollInterval
+PollInterval -&gt; PollInterval
+PollInterval -&gt; PollInterval -&gt; PollInterval
+forall (a :: OpticKind).
+(a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (Integer -&gt; a)
+-&gt; Num a
+fromInteger :: Integer -&gt; PollInterval
+$cfromInteger :: Integer -&gt; PollInterval
+signum :: PollInterval -&gt; PollInterval
+$csignum :: PollInterval -&gt; PollInterval
+abs :: PollInterval -&gt; PollInterval
+$cabs :: PollInterval -&gt; PollInterval
+negate :: PollInterval -&gt; PollInterval
+$cnegate :: PollInterval -&gt; PollInterval
+* :: PollInterval -&gt; PollInterval -&gt; PollInterval
+$c* :: PollInterval -&gt; PollInterval -&gt; PollInterval
+- :: PollInterval -&gt; PollInterval -&gt; PollInterval
+$c- :: PollInterval -&gt; PollInterval -&gt; PollInterval
++ :: PollInterval -&gt; PollInterval -&gt; PollInterval
+$c+ :: PollInterval -&gt; PollInterval -&gt; PollInterval
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Num.html#Num"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Num</span></a></span></span></span></span></span></span></span></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">via</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-bignum-1.2/src/GHC.Num.Natural.html#Natural"><span class="hs-identifier hs-type">Natural</span></a></span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-26"></span><span id="local-6989586621679305006"><span id="local-6989586621679305169"><span id="local-6989586621679305170"><span id="local-6989586621679305171"><span class="hs-identifier">makeFieldLabelsNoPrefix</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">PollInterval</span></span></span></span></span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-29"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Enum.html#Bounded"><span class="hs-identifier hs-type">Bounded</span></a></span><span> </span><span class="annot"><a href="Navi.Data.PollInterval.html#PollInterval"><span class="hs-identifier hs-type">PollInterval</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-30"></span><span>  </span><span id="local-6989586621679304993"><span class="annot"><span class="annottext">minBound :: PollInterval
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Enum.html#minBound"><span class="hs-identifier hs-var hs-var hs-var hs-var">minBound</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Natural -&gt; PollInterval
+</span><a href="Navi.Data.PollInterval.html#MkPollInterval"><span class="hs-identifier hs-var">MkPollInterval</span></a></span><span> </span><span class="annot"><span class="annottext">Natural
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-31"></span><span>  </span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Enum.html#minBound"><span class="hs-pragma hs-type">minBound</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-32"></span><span>  </span><span id="local-6989586621679304991"><span class="annot"><span class="annottext">maxBound :: PollInterval
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Enum.html#maxBound"><span class="hs-identifier hs-var hs-var hs-var hs-var">maxBound</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PollInterval
+</span><a href="Navi.Data.PollInterval.html#maxPollInterval"><span class="hs-identifier hs-var">maxPollInterval</span></a></span><span>
+</span><span id="line-33"></span><span>  </span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Enum.html#maxBound"><span class="hs-pragma hs-type">maxBound</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-36"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Navi.Data.PollInterval.html#PollInterval"><span class="hs-identifier hs-type">PollInterval</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-37"></span><span>  </span><span id="local-6989586621679304976"><span class="annot"><span class="annottext">tomlDecoder :: Decoder PollInterval
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (a :: OpticKind). (Value -&gt; DecodeM a) -&gt; Decoder a
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#makeDecoder"><span class="hs-identifier hs-var">makeDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">forall (a :: OpticKind) b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-38"></span><span>    </span><span class="annot"><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Value.html#String"><span class="hs-identifier hs-type">String</span></a></span><span> </span><span id="local-6989586621679304972"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679304972"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-39"></span><span>      </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">String -&gt; Either String RelativeTime
+</span><span class="hs-identifier hs-var">Rel.fromString</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; String
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Show.html#unpack"><span class="hs-identifier hs-var">unpack</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679304972"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-40"></span><span>        </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Data.Either.html#Left"><span class="hs-identifier hs-type">Left</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">forall (m :: OpticKind -&gt; OpticKind) (a :: OpticKind).
+MonadFail m =&gt;
+String -&gt; m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Control.Monad.Fail.html#fail"><span class="hs-identifier hs-var">fail</span></a></span><span> </span><span class="annot"><span class="annottext">forall (a :: OpticKind) b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Show.html#unpack"><span class="hs-identifier hs-var">unpack</span></a></span><span> </span><span class="annot"><span class="annottext">forall (a :: OpticKind) b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Could not parse poll-interval: &quot;</span></span><span> </span><span class="annot"><span class="annottext">forall (a :: OpticKind). Semigroup a =&gt; a -&gt; a -&gt; a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%3C%3E"><span class="hs-operator hs-var">&lt;&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679304972"><span class="hs-identifier hs-var">t</span></a></span><span>
+</span><span id="line-41"></span><span>        </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Data.Either.html#Right"><span class="hs-identifier hs-type">Right</span></a></span><span> </span><span id="local-6989586621679304969"><span class="annot"><span class="annottext">RelativeTime
+</span><a href="#local-6989586621679304969"><span class="hs-identifier hs-var">relTime</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">forall (f :: OpticKind -&gt; OpticKind).
+MonadFail f =&gt;
+Natural -&gt; f PollInterval
+</span><a href="Navi.Data.PollInterval.html#ltRelTimeBounds"><span class="hs-identifier hs-var">ltRelTimeBounds</span></a></span><span> </span><span class="annot"><span class="annottext">forall (a :: OpticKind) b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">RelativeTime -&gt; Natural
+</span><span class="hs-identifier hs-var">Rel.toSeconds</span></span><span> </span><span class="annot"><span class="annottext">RelativeTime
+</span><a href="#local-6989586621679304969"><span class="hs-identifier hs-var">relTime</span></a></span><span>
+</span><span id="line-42"></span><span>    </span><span class="annot"><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Value.html#Integer"><span class="hs-identifier hs-type">Integer</span></a></span><span> </span><span id="local-6989586621679304965"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679304965"><span class="hs-identifier hs-var">i</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">forall (f :: OpticKind -&gt; OpticKind).
+MonadFail f =&gt;
+Natural -&gt; f PollInterval
+</span><a href="Navi.Data.PollInterval.html#ltRelTimeBounds"><span class="hs-identifier hs-var">ltRelTimeBounds</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">forall (a :: OpticKind) (b :: OpticKind).
+(Integral a, Num b) =&gt;
+a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Real.html#fromIntegral"><span class="hs-identifier hs-var">fromIntegral</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679304965"><span class="hs-identifier hs-var">i</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-43"></span><span>    </span><span id="local-6989586621679304964"><span class="annot"><span class="annottext">Value
+</span><a href="#local-6989586621679304964"><span class="hs-identifier hs-var">badTy</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">forall (a :: OpticKind). Value -&gt; DecodeM a
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#typeMismatch"><span class="hs-identifier hs-var">typeMismatch</span></a></span><span> </span><span class="annot"><span class="annottext">Value
+</span><a href="#local-6989586621679304964"><span class="hs-identifier hs-var">badTy</span></a></span><span>
+</span><span id="line-44"></span><span>
+</span><span id="line-45"></span><span id="local-6989586621679305136"><span class="annot"><a href="Navi.Data.PollInterval.html#ltRelTimeBounds"><span class="hs-identifier hs-type">ltRelTimeBounds</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Control.Monad.Fail.html#MonadFail"><span class="hs-identifier hs-type">MonadFail</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679305136"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-bignum-1.2/src/GHC.Num.Natural.html#Natural"><span class="hs-identifier hs-type">Natural</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679305136"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="annot"><a href="Navi.Data.PollInterval.html#PollInterval"><span class="hs-identifier hs-type">PollInterval</span></a></span></span><span>
+</span><span id="line-46"></span><span id="ltRelTimeBounds"><span class="annot"><span class="annottext">ltRelTimeBounds :: forall (f :: OpticKind -&gt; OpticKind).
+MonadFail f =&gt;
+Natural -&gt; f PollInterval
+</span><a href="Navi.Data.PollInterval.html#ltRelTimeBounds"><span class="hs-identifier hs-var hs-var">ltRelTimeBounds</span></a></span></span><span> </span><span id="local-6989586621679304948"><span class="annot"><span class="annottext">Natural
+</span><a href="#local-6989586621679304948"><span class="hs-identifier hs-var">n</span></a></span></span><span>
+</span><span id="line-47"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Natural -&gt; PollInterval
+</span><a href="Navi.Data.PollInterval.html#MkPollInterval"><span class="hs-identifier hs-var">MkPollInterval</span></a></span><span> </span><span class="annot"><span class="annottext">Natural
+</span><a href="#local-6989586621679304948"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">forall (a :: OpticKind). Ord a =&gt; a -&gt; a -&gt; Bool
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Classes.html#%3C%3D"><span class="hs-operator hs-var">&lt;=</span></a></span><span> </span><span class="annot"><span class="annottext">forall (a :: OpticKind). Bounded a =&gt; a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Enum.html#maxBound"><span class="hs-identifier hs-var">maxBound</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (f :: OpticKind -&gt; OpticKind) (a :: OpticKind).
+Applicative f =&gt;
+a -&gt; f a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#pure"><span class="hs-identifier hs-var">pure</span></a></span><span> </span><span class="annot"><span class="annottext">forall (a :: OpticKind) b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">Natural -&gt; PollInterval
+</span><a href="Navi.Data.PollInterval.html#MkPollInterval"><span class="hs-identifier hs-var">MkPollInterval</span></a></span><span> </span><span class="annot"><span class="annottext">Natural
+</span><a href="#local-6989586621679304948"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-48"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#otherwise"><span class="hs-identifier hs-var">otherwise</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-49"></span><span>      </span><span class="annot"><span class="annottext">forall (m :: OpticKind -&gt; OpticKind) (a :: OpticKind).
+MonadFail m =&gt;
+String -&gt; m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Control.Monad.Fail.html#fail"><span class="hs-identifier hs-var">fail</span></a></span><span> </span><span class="annot"><span class="annottext">forall (a :: OpticKind) b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span>
+</span><span id="line-50"></span><span>        </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Show.html#unpack"><span class="hs-identifier hs-var">unpack</span></a></span><span> </span><span class="annot"><span class="annottext">forall (a :: OpticKind) b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span>
+</span><span id="line-51"></span><span>          </span><span class="annot"><span class="annottext">[Text] -&gt; Text
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.html#concat"><span class="hs-identifier hs-var">T.concat</span></a></span><span>
+</span><span id="line-52"></span><span>            </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Given poll interval of &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-53"></span><span>              </span><span class="annot"><span class="annottext">forall (a :: OpticKind). Show a =&gt; a -&gt; Text
+</span><a href="Navi.Prelude.html#showt"><span class="hs-identifier hs-var">showt</span></a></span><span> </span><span class="annot"><span class="annottext">Natural
+</span><a href="#local-6989586621679304948"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-54"></span><span>              </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot; is too large. Maximum seconds is &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-55"></span><span>              </span><span class="annot"><span class="annottext">forall (a :: OpticKind). Show a =&gt; a -&gt; Text
+</span><a href="Navi.Prelude.html#showt"><span class="hs-identifier hs-var">showt</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="Navi.Data.PollInterval.html#PollInterval"><span class="hs-identifier hs-type">PollInterval</span></a></span><span> </span><span class="annot"><span class="annottext">forall (a :: OpticKind). Bounded a =&gt; a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Enum.html#maxBound"><span class="hs-identifier hs-var">maxBound</span></a></span><span>
+</span><span id="line-56"></span><span>            </span><span class="hs-special">]</span><span>
+</span><span id="line-57"></span><span>
+</span><span id="line-58"></span><span class="hs-comment">-- | TOML decoder for optional 'PollInterval' with field name 'poll-interval'.</span><span>
+</span><span id="line-59"></span><span class="hs-comment">--</span><span>
+</span><span id="line-60"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-61"></span><span class="annot"><a href="Navi.Data.PollInterval.html#pollIntervalOptDecoder"><span class="hs-identifier hs-type">pollIntervalOptDecoder</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#Decoder"><span class="hs-identifier hs-type">Decoder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="Navi.Data.PollInterval.html#PollInterval"><span class="hs-identifier hs-type">PollInterval</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-62"></span><span id="pollIntervalOptDecoder"><span class="annot"><span class="annottext">pollIntervalOptDecoder :: Decoder (Maybe PollInterval)
+</span><a href="Navi.Data.PollInterval.html#pollIntervalOptDecoder"><span class="hs-identifier hs-var hs-var">pollIntervalOptDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (a :: OpticKind). Decoder a -&gt; Text -&gt; Decoder (Maybe a)
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#getFieldOptWith"><span class="hs-identifier hs-var">getFieldOptWith</span></a></span><span> </span><span class="annot"><span class="annottext">forall (a :: OpticKind). DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;poll-interval&quot;</span></span><span>
+</span><span id="line-63"></span><span>
+</span><span id="line-64"></span><span class="hs-comment">-- | Converts a 'PollInterval' into an 'Int' suitable to be used with</span><span>
+</span><span id="line-65"></span><span class="hs-comment">-- threadDelay.</span><span>
+</span><span id="line-66"></span><span class="hs-comment">--</span><span>
+</span><span id="line-67"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-68"></span><span class="annot"><a href="Navi.Data.PollInterval.html#toSleepTime"><span class="hs-identifier hs-type">toSleepTime</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Navi.Data.PollInterval.html#PollInterval"><span class="hs-identifier hs-type">PollInterval</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Types.html#Int"><span class="hs-identifier hs-type">Int</span></a></span><span>
+</span><span id="line-69"></span><span id="toSleepTime"><span class="annot"><span class="annottext">toSleepTime :: PollInterval -&gt; Int
+</span><a href="Navi.Data.PollInterval.html#toSleepTime"><span class="hs-identifier hs-var hs-var">toSleepTime</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (a :: OpticKind) (b :: OpticKind).
+(Integral a, Num b) =&gt;
+a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Real.html#fromIntegral"><span class="hs-identifier hs-var">fromIntegral</span></a></span><span> </span><span class="annot"><span class="annottext">forall (b :: OpticKind) (c :: OpticKind) (a :: OpticKind).
+(b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#."><span class="hs-operator hs-var">.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">forall (a :: OpticKind). Num a =&gt; a -&gt; a -&gt; a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Num.html#%2A"><span class="hs-operator hs-var">*</span></a></span><span> </span><span class="annot"><span class="annottext">Natural
+</span><span class="hs-number">1_000_000</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">forall (b :: OpticKind) (c :: OpticKind) (a :: OpticKind).
+(b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#."><span class="hs-operator hs-var">.</span></a></span><span> </span><span class="annot"><span class="annottext">forall (k :: OpticKind) (is :: IxList) (s :: OpticKind)
+       (a :: OpticKind).
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///nix/store/94ab8p48g5ga04p8jv817kgpbgadmcwd-optics-core-0.4.1-doc/share/doc/optics-core-0.4.1/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">forall (a :: OpticKind). IsLabel &quot;unPollInterval&quot; a =&gt; a
+</span><span class="">#unPollInterval</span></span><span>
+</span><span id="line-70"></span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Navi.Data.PollInterval.html#toSleepTime"><span class="hs-pragma hs-type">toSleepTime</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-71"></span><span>
+</span><span id="line-72"></span><span class="annot"><a href="Navi.Data.PollInterval.html#maxPollInterval"><span class="hs-identifier hs-type">maxPollInterval</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Navi.Data.PollInterval.html#PollInterval"><span class="hs-identifier hs-type">PollInterval</span></a></span><span>
+</span><span id="line-73"></span><span id="maxPollInterval"><span class="annot"><span class="annottext">maxPollInterval :: PollInterval
+</span><a href="Navi.Data.PollInterval.html#maxPollInterval"><span class="hs-identifier hs-var hs-var">maxPollInterval</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Natural -&gt; PollInterval
+</span><a href="Navi.Data.PollInterval.html#MkPollInterval"><span class="hs-identifier hs-var">MkPollInterval</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">forall (a :: OpticKind) (b :: OpticKind).
+(Integral a, Num b) =&gt;
+a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Real.html#fromIntegral"><span class="hs-identifier hs-var">fromIntegral</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679304940"><span class="hs-identifier hs-var">mx</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-74"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-75"></span><span>    </span><span class="hs-comment">-- PollInterval represents seconds, and we eventually want to use it in</span><span>
+</span><span id="line-76"></span><span>    </span><span class="hs-comment">-- threadDelay (which requires an Int). This means we have to multiply</span><span>
+</span><span id="line-77"></span><span>    </span><span class="hs-comment">-- by 1_000_000, thus the maximum value we can safely store is</span><span>
+</span><span id="line-78"></span><span>    </span><span class="hs-comment">-- (maxInt / 1_000_000).</span><span>
+</span><span id="line-79"></span><span>    </span><span id="local-6989586621679304940"><span class="annot"><span class="annottext">mx :: Int
+</span><a href="#local-6989586621679304940"><span class="hs-identifier hs-var hs-var">mx</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">forall (a :: OpticKind). Bounded a =&gt; a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Enum.html#maxBound"><span class="hs-identifier hs-var">maxBound</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Types.html#Int"><span class="hs-identifier hs-type">Int</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">forall (a :: OpticKind). Integral a =&gt; a -&gt; a -&gt; a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Real.html#div"><span class="hs-operator hs-var">`div`</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1_000_000</span></span><span>
+</span><span id="line-80"></span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Navi.Data.PollInterval.html#maxPollInterval"><span class="hs-pragma hs-type">maxPollInterval</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-81"></span></pre></body></html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE TemplateHaskell #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE ViewPatterns #-}</span><span>
+</span><span id="line-4"></span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- | This module provides toml configuration for the battery status service.</span><span>
+</span><span id="line-6"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Navi.Services.Battery.Status.Toml</span><span>
+</span><span id="line-7"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Navi.Services.Battery.Status.Toml.html#BatteryStatusToml"><span class="hs-identifier">BatteryStatusToml</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-10"></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Data.NaviNote.html"><span class="hs-identifier">Navi.Data.NaviNote</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Data.NaviNote.html#Timeout"><span class="hs-identifier">Timeout</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Navi.Data.NaviNote.html#timeoutOptDecoder"><span class="hs-identifier">timeoutOptDecoder</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Data.PollInterval.html"><span class="hs-identifier">Navi.Data.PollInterval</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Data.PollInterval.html#PollInterval"><span class="hs-identifier">PollInterval</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Navi.Data.PollInterval.html#pollIntervalOptDecoder"><span class="hs-identifier">pollIntervalOptDecoder</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Event.Toml.html"><span class="hs-identifier">Navi.Event.Toml</span></a></span><span>
+</span><span id="line-14"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Navi.Event.Toml.html#ErrorNoteToml"><span class="hs-identifier">ErrorNoteToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><a href="Navi.Event.Toml.html#RepeatEventToml"><span class="hs-identifier">RepeatEventToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><a href="Navi.Event.Toml.html#errorNoteOptDecoder"><span class="hs-identifier">errorNoteOptDecoder</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>    </span><span class="annot"><a href="Navi.Event.Toml.html#repeatEventOptDecoder"><span class="hs-identifier">repeatEventOptDecoder</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Prelude.html"><span class="hs-identifier">Navi.Prelude</span></a></span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Services.Battery.Common.html"><span class="hs-identifier">Navi.Services.Battery.Common</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Services.Battery.Common.html#batteryAppDecoder"><span class="hs-identifier">batteryAppDecoder</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Pythia.Services.Battery</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">BatteryApp</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span>
+</span><span id="line-23"></span><span class="hs-comment">-- | TOML for the battery status service.</span><span>
+</span><span id="line-24"></span><span class="hs-keyword">data</span><span> </span><span id="BatteryStatusToml"><span class="annot"><a href="Navi.Services.Battery.Status.Toml.html#BatteryStatusToml"><span class="hs-identifier hs-var">BatteryStatusToml</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkBatteryStatusToml"><span class="annot"><a href="Navi.Services.Battery.Status.Toml.html#MkBatteryStatusToml"><span class="hs-identifier hs-var">MkBatteryStatusToml</span></a></span></span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="hs-comment">-- | Determines how we should query the system for battery information.</span><span>
+</span><span id="line-26"></span><span>    </span><span id="%24sel%3Aapp%3AMkBatteryStatusToml"><span class="annot"><span class="annottext">BatteryStatusToml -&gt; BatteryApp
+</span><a href="Navi.Services.Battery.Status.Toml.html#%24sel%3Aapp%3AMkBatteryStatusToml"><span class="hs-identifier hs-var hs-var">app</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">BatteryApp</span></span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>    </span><span class="hs-comment">-- | The poll interval.</span><span>
+</span><span id="line-28"></span><span>    </span><span id="%24sel%3ApollInterval%3AMkBatteryStatusToml"><span class="annot"><span class="annottext">BatteryStatusToml -&gt; Maybe PollInterval
+</span><a href="Navi.Services.Battery.Status.Toml.html#%24sel%3ApollInterval%3AMkBatteryStatusToml"><span class="hs-identifier hs-var hs-var">pollInterval</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="Navi.Data.PollInterval.html#PollInterval"><span class="hs-identifier hs-type">PollInterval</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>    </span><span class="hs-comment">-- | Determines how we treat repeat alerts.</span><span>
+</span><span id="line-30"></span><span>    </span><span id="%24sel%3ArepeatEvent%3AMkBatteryStatusToml"><span class="annot"><span class="annottext">BatteryStatusToml -&gt; Maybe RepeatEventToml
+</span><a href="Navi.Services.Battery.Status.Toml.html#%24sel%3ArepeatEvent%3AMkBatteryStatusToml"><span class="hs-identifier hs-var hs-var">repeatEvent</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="Navi.Event.Toml.html#RepeatEventToml"><span class="hs-identifier hs-type">RepeatEventToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-31"></span><span>    </span><span class="hs-comment">-- | Determines how we handle errors.</span><span>
+</span><span id="line-32"></span><span>    </span><span id="%24sel%3AerrorNote%3AMkBatteryStatusToml"><span class="annot"><span class="annottext">BatteryStatusToml -&gt; Maybe ErrorNoteToml
+</span><a href="Navi.Services.Battery.Status.Toml.html#%24sel%3AerrorNote%3AMkBatteryStatusToml"><span class="hs-identifier hs-var hs-var">errorNote</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="Navi.Event.Toml.html#ErrorNoteToml"><span class="hs-identifier hs-type">ErrorNoteToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-33"></span><span>    </span><span class="hs-comment">-- | The timeout for this alert.</span><span>
+</span><span id="line-34"></span><span>    </span><span id="%24sel%3AmTimeout%3AMkBatteryStatusToml"><span class="annot"><span class="annottext">BatteryStatusToml -&gt; Maybe Timeout
+</span><a href="Navi.Services.Battery.Status.Toml.html#%24sel%3AmTimeout%3AMkBatteryStatusToml"><span class="hs-identifier hs-var hs-var">mTimeout</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="Navi.Data.NaviNote.html#Timeout"><span class="hs-identifier hs-type">Timeout</span></a></span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-36"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679308674"><span id="local-6989586621679308687"><span class="annot"><span class="annottext">BatteryStatusToml -&gt; BatteryStatusToml -&gt; Bool
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: BatteryStatusToml -&gt; BatteryStatusToml -&gt; Bool
+$c/= :: BatteryStatusToml -&gt; BatteryStatusToml -&gt; Bool
+== :: BatteryStatusToml -&gt; BatteryStatusToml -&gt; Bool
+$c== :: BatteryStatusToml -&gt; BatteryStatusToml -&gt; Bool
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Classes.html#Eq"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></a></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679308650"><span id="local-6989586621679308652"><span id="local-6989586621679308667"><span class="annot"><span class="annottext">Int -&gt; BatteryStatusToml -&gt; ShowS
+[BatteryStatusToml] -&gt; ShowS
+BatteryStatusToml -&gt; String
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [BatteryStatusToml] -&gt; ShowS
+$cshowList :: [BatteryStatusToml] -&gt; ShowS
+show :: BatteryStatusToml -&gt; String
+$cshow :: BatteryStatusToml -&gt; String
+showsPrec :: Int -&gt; BatteryStatusToml -&gt; ShowS
+$cshowsPrec :: Int -&gt; BatteryStatusToml -&gt; ShowS
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Show.html#Show"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></a></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span id="local-6989586621679308620"><span id="local-6989586621679308625"><span id="local-6989586621679308630"><span id="local-6989586621679308635"><span id="local-6989586621679308640"><span id="local-6989586621679308730"><span id="local-6989586621679308731"><span id="local-6989586621679308732"><span id="local-6989586621679308733"><span id="local-6989586621679308734"><span id="local-6989586621679308735"><span id="local-6989586621679308736"><span id="local-6989586621679308737"><span id="local-6989586621679308738"><span id="local-6989586621679308739"><span id="local-6989586621679308740"><span id="local-6989586621679308741"><span id="local-6989586621679308742"><span id="local-6989586621679308743"><span id="local-6989586621679308744"><span class="hs-identifier">makeFieldLabelsNoPrefix</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">BatteryStatusToml</span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span><span>
+</span><span id="line-39"></span><span>
+</span><span id="line-40"></span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-41"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Navi.Services.Battery.Status.Toml.html#BatteryStatusToml"><span class="hs-identifier hs-type">BatteryStatusToml</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-42"></span><span>  </span><span id="local-6989586621679308534"><span class="annot"><span class="annottext">tomlDecoder :: Decoder BatteryStatusToml
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-43"></span><span>    </span><span class="annot"><span class="annottext">BatteryApp
+-&gt; Maybe PollInterval
+-&gt; Maybe RepeatEventToml
+-&gt; Maybe ErrorNoteToml
+-&gt; Maybe Timeout
+-&gt; BatteryStatusToml
+</span><a href="Navi.Services.Battery.Status.Toml.html#MkBatteryStatusToml"><span class="hs-identifier hs-var">MkBatteryStatusToml</span></a></span><span>
+</span><span id="line-44"></span><span>      </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Data.Functor.html#%3C%24%3E"><span class="hs-operator hs-var">&lt;$&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. Decoder a -&gt; Text -&gt; Decoder a
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#getFieldWith"><span class="hs-identifier hs-var">getFieldWith</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder BatteryApp
+</span><a href="Navi.Services.Battery.Common.html#batteryAppDecoder"><span class="hs-identifier hs-var">batteryAppDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;app&quot;</span></span><span>
+</span><span id="line-45"></span><span>      </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%3C%2A%3E"><span class="hs-operator hs-var">&lt;*&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (Maybe PollInterval)
+</span><a href="Navi.Data.PollInterval.html#pollIntervalOptDecoder"><span class="hs-identifier hs-var">pollIntervalOptDecoder</span></a></span><span>
+</span><span id="line-46"></span><span>      </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%3C%2A%3E"><span class="hs-operator hs-var">&lt;*&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (Maybe RepeatEventToml)
+</span><a href="Navi.Event.Toml.html#repeatEventOptDecoder"><span class="hs-identifier hs-var">repeatEventOptDecoder</span></a></span><span>
+</span><span id="line-47"></span><span>      </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%3C%2A%3E"><span class="hs-operator hs-var">&lt;*&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (Maybe ErrorNoteToml)
+</span><a href="Navi.Event.Toml.html#errorNoteOptDecoder"><span class="hs-identifier hs-var">errorNoteOptDecoder</span></a></span><span>
+</span><span id="line-48"></span><span>      </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%3C%2A%3E"><span class="hs-operator hs-var">&lt;*&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (Maybe Timeout)
+</span><a href="Navi.Data.NaviNote.html#timeoutOptDecoder"><span class="hs-identifier hs-var">timeoutOptDecoder</span></a></span><span>
+</span><span id="line-49"></span></pre></body></html>

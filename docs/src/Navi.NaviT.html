@@ -1,0 +1,943 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE TemplateHaskell #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-3"></span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- | Provides 'NaviT', the main type that runs the application.</span><span>
+</span><span id="line-5"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Navi.NaviT</span><span>
+</span><span id="line-6"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Navi.NaviT.html#NaviT"><span class="hs-identifier">NaviT</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Navi.NaviT.html#runNaviT"><span class="hs-identifier">runNaviT</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-10"></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/sgvfmc97njjj54rz5cmlkhndh5cc9zb9-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html"><span class="hs-identifier">DBus.Notify</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">DBusN</span></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Effects.LoggerNamespace</span></span><span>
+</span><span id="line-13"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">MonadLoggerNamespace</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>    </span><span class="annot"><span class="hs-identifier">addNamespace</span></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><span class="hs-identifier">defaultLogFormatter</span></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><span class="hs-identifier">formatLog</span></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Effects.System.Terminal</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">MonadTerminal</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Effects.Time</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">MonadTime</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Effects.MonadNotify.html"><span class="hs-identifier">Navi.Effects.MonadNotify</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Effects.MonadNotify.html#MonadNotify"><span class="hs-identifier">MonadNotify</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Effects.MonadSystemInfo.html"><span class="hs-identifier">Navi.Effects.MonadSystemInfo</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Effects.MonadSystemInfo.html#MonadSystemInfo"><span class="hs-identifier">MonadSystemInfo</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Env.Core.html"><span class="hs-identifier">Navi.Env.Core</span></a></span><span>
+</span><span id="line-23"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Navi.Env.Core.html#HasLogEnv"><span class="hs-identifier">HasLogEnv</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-24"></span><span>    </span><span class="annot"><a href="Navi.Env.Core.html#HasLogQueue"><span class="hs-identifier">HasLogQueue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Env.Core.html#getLogQueue"><span class="hs-identifier">getLogQueue</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Env.DBus.html"><span class="hs-identifier">Navi.Env.DBus</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Env.DBus.html#DBusEnv"><span class="hs-identifier">DBusEnv</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Navi.Env.DBus.html#HasDBusClient"><span class="hs-identifier">HasDBusClient</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Navi.Env.DBus.html#naviToDBus"><span class="hs-identifier">naviToDBus</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Env.NotifySend.html"><span class="hs-identifier">Navi.Env.NotifySend</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Env.NotifySend.html#NotifySendEnv"><span class="hs-identifier">NotifySendEnv</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Navi.Env.NotifySend.html#naviToNotifySend"><span class="hs-identifier">naviToNotifySend</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Prelude.html"><span class="hs-identifier">Navi.Prelude</span></a></span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/process-1.6.16.0/src/System.Process.html"><span class="hs-identifier">System.Process</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Proc</span></span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span class="hs-comment">-- | NaviT is the core type used to run the application.</span><span>
+</span><span id="line-32"></span><span class="hs-keyword">type</span><span> </span><span class="annot"><a href="Navi.NaviT.html#NaviT"><span class="hs-identifier hs-type">NaviT</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Types.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Types.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Types.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Types.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Types.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span>
+</span><span id="line-33"></span><span class="hs-keyword">newtype</span><span> </span><span id="NaviT"><span class="annot"><a href="Navi.NaviT.html#NaviT"><span class="hs-identifier hs-var">NaviT</span></a></span></span><span> </span><span id="local-6989586621679313558"><span class="annot"><a href="#local-6989586621679313558"><span class="hs-identifier hs-type">e</span></a></span></span><span> </span><span id="local-6989586621679313559"><span class="annot"><a href="#local-6989586621679313559"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span id="local-6989586621679313202"><span class="annot"><a href="#local-6989586621679313202"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkNaviT"><span class="annot"><a href="Navi.NaviT.html#MkNaviT"><span class="hs-identifier hs-var">MkNaviT</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/transformers-0.5.6.2/src/Control.Monad.Trans.Reader.html#ReaderT"><span class="hs-identifier hs-type">ReaderT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679313558"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679313559"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679313202"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span>  </span><span class="hs-keyword">deriving</span><span>
+</span><span id="line-35"></span><span>    </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679313193"><span id="local-6989586621679313198"><span class="annot"><span class="annottext">forall a b. a -&gt; NaviT e m b -&gt; NaviT e m a
+forall a b. (a -&gt; b) -&gt; NaviT e m a -&gt; NaviT e m b
+forall e (m :: Type -&gt; Type) a b.
+Functor m =&gt;
+a -&gt; NaviT e m b -&gt; NaviT e m a
+forall e (m :: Type -&gt; Type) a b.
+Functor m =&gt;
+(a -&gt; b) -&gt; NaviT e m a -&gt; NaviT e m b
+forall (f :: Type -&gt; Type).
+(forall a b. (a -&gt; b) -&gt; f a -&gt; f b)
+-&gt; (forall a b. a -&gt; f b -&gt; f a) -&gt; Functor f
+&lt;$ :: forall a b. a -&gt; NaviT e m b -&gt; NaviT e m a
+$c&lt;$ :: forall e (m :: Type -&gt; Type) a b.
+Functor m =&gt;
+a -&gt; NaviT e m b -&gt; NaviT e m a
+fmap :: forall a b. (a -&gt; b) -&gt; NaviT e m a -&gt; NaviT e m b
+$cfmap :: forall e (m :: Type -&gt; Type) a b.
+Functor m =&gt;
+(a -&gt; b) -&gt; NaviT e m a -&gt; NaviT e m b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#Functor"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Functor</span></a></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-36"></span><span>      </span><span id="local-6989586621679313166"><span id="local-6989586621679313170"><span id="local-6989586621679313174"><span id="local-6989586621679313178"><span id="local-6989586621679313183"><span class="annot"><span class="annottext">forall a. a -&gt; NaviT e m a
+forall a b. NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m a
+forall a b. NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m b
+forall a b. NaviT e m (a -&gt; b) -&gt; NaviT e m a -&gt; NaviT e m b
+forall a b c.
+(a -&gt; b -&gt; c) -&gt; NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m c
+forall {e} {m :: Type -&gt; Type}.
+Applicative m =&gt;
+Functor (NaviT e m)
+forall e (m :: Type -&gt; Type) a. Applicative m =&gt; a -&gt; NaviT e m a
+forall e (m :: Type -&gt; Type) a b.
+Applicative m =&gt;
+NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m a
+forall e (m :: Type -&gt; Type) a b.
+Applicative m =&gt;
+NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m b
+forall e (m :: Type -&gt; Type) a b.
+Applicative m =&gt;
+NaviT e m (a -&gt; b) -&gt; NaviT e m a -&gt; NaviT e m b
+forall e (m :: Type -&gt; Type) a b c.
+Applicative m =&gt;
+(a -&gt; b -&gt; c) -&gt; NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m c
+forall (f :: Type -&gt; Type).
+Functor f
+-&gt; (forall a. a -&gt; f a)
+-&gt; (forall a b. f (a -&gt; b) -&gt; f a -&gt; f b)
+-&gt; (forall a b c. (a -&gt; b -&gt; c) -&gt; f a -&gt; f b -&gt; f c)
+-&gt; (forall a b. f a -&gt; f b -&gt; f b)
+-&gt; (forall a b. f a -&gt; f b -&gt; f a)
+-&gt; Applicative f
+&lt;* :: forall a b. NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m a
+$c&lt;* :: forall e (m :: Type -&gt; Type) a b.
+Applicative m =&gt;
+NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m a
+*&gt; :: forall a b. NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m b
+$c*&gt; :: forall e (m :: Type -&gt; Type) a b.
+Applicative m =&gt;
+NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m b
+liftA2 :: forall a b c.
+(a -&gt; b -&gt; c) -&gt; NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m c
+$cliftA2 :: forall e (m :: Type -&gt; Type) a b c.
+Applicative m =&gt;
+(a -&gt; b -&gt; c) -&gt; NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m c
+&lt;*&gt; :: forall a b. NaviT e m (a -&gt; b) -&gt; NaviT e m a -&gt; NaviT e m b
+$c&lt;*&gt; :: forall e (m :: Type -&gt; Type) a b.
+Applicative m =&gt;
+NaviT e m (a -&gt; b) -&gt; NaviT e m a -&gt; NaviT e m b
+pure :: forall a. a -&gt; NaviT e m a
+$cpure :: forall e (m :: Type -&gt; Type) a. Applicative m =&gt; a -&gt; NaviT e m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#Applicative"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Applicative</span></a></span></span></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-37"></span><span>      </span><span id="local-6989586621679313146"><span id="local-6989586621679313150"><span id="local-6989586621679313155"><span class="annot"><span class="annottext">forall a. a -&gt; NaviT e m a
+forall a b. NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m b
+forall a b. NaviT e m a -&gt; (a -&gt; NaviT e m b) -&gt; NaviT e m b
+forall {e} {m :: Type -&gt; Type}. Monad m =&gt; Applicative (NaviT e m)
+forall e (m :: Type -&gt; Type) a. Monad m =&gt; a -&gt; NaviT e m a
+forall e (m :: Type -&gt; Type) a b.
+Monad m =&gt;
+NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m b
+forall e (m :: Type -&gt; Type) a b.
+Monad m =&gt;
+NaviT e m a -&gt; (a -&gt; NaviT e m b) -&gt; NaviT e m b
+forall (m :: Type -&gt; Type).
+Applicative m
+-&gt; (forall a b. m a -&gt; (a -&gt; m b) -&gt; m b)
+-&gt; (forall a b. m a -&gt; m b -&gt; m b)
+-&gt; (forall a. a -&gt; m a)
+-&gt; Monad m
+return :: forall a. a -&gt; NaviT e m a
+$creturn :: forall e (m :: Type -&gt; Type) a. Monad m =&gt; a -&gt; NaviT e m a
+&gt;&gt; :: forall a b. NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m b
+$c&gt;&gt; :: forall e (m :: Type -&gt; Type) a b.
+Monad m =&gt;
+NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m b
+&gt;&gt;= :: forall a b. NaviT e m a -&gt; (a -&gt; NaviT e m b) -&gt; NaviT e m b
+$c&gt;&gt;= :: forall e (m :: Type -&gt; Type) a b.
+Monad m =&gt;
+NaviT e m a -&gt; (a -&gt; NaviT e m b) -&gt; NaviT e m b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#Monad"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Monad</span></a></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-38"></span><span>      </span><span id="local-6989586621679313006"><span id="local-6989586621679313015"><span id="local-6989586621679313024"><span id="local-6989586621679313033"><span id="local-6989586621679313042"><span id="local-6989586621679313051"><span id="local-6989586621679313060"><span id="local-6989586621679313069"><span id="local-6989586621679313078"><span id="local-6989586621679313087"><span id="local-6989586621679313096"><span id="local-6989586621679313105"><span id="local-6989586621679313114"><span id="local-6989586621679313123"><span id="local-6989586621679313133"><span class="annot"><span class="annottext">forall a. HasCallStack =&gt; Int -&gt; NaviT e m a -&gt; NaviT e m (Async a)
+forall a.
+HasCallStack =&gt;
+Int
+-&gt; ((forall b. NaviT e m b -&gt; NaviT e m b) -&gt; NaviT e m a)
+-&gt; NaviT e m (Async a)
+forall a. HasCallStack =&gt; NaviT e m a -&gt; NaviT e m (Async a)
+forall a.
+HasCallStack =&gt;
+(SomeException -&gt; Bool) -&gt; Async a -&gt; NaviT e m ()
+forall a.
+HasCallStack =&gt;
+((forall b. NaviT e m b -&gt; NaviT e m b) -&gt; NaviT e m a)
+-&gt; NaviT e m (Async a)
+forall a b.
+HasCallStack =&gt;
+Int -&gt; NaviT e m a -&gt; (Async a -&gt; NaviT e m b) -&gt; NaviT e m b
+forall a b.
+HasCallStack =&gt;
+Int
+-&gt; ((forall b. NaviT e m b -&gt; NaviT e m b) -&gt; NaviT e m a)
+-&gt; (Async a -&gt; NaviT e m b)
+-&gt; NaviT e m b
+forall a b.
+HasCallStack =&gt;
+NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m (Either a b)
+forall a b.
+HasCallStack =&gt;
+NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m ()
+forall a b.
+HasCallStack =&gt;
+NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m (a, b)
+forall a b.
+HasCallStack =&gt;
+NaviT e m a -&gt; (Async a -&gt; NaviT e m b) -&gt; NaviT e m b
+forall a b.
+HasCallStack =&gt;
+(SomeException -&gt; Bool) -&gt; Async a -&gt; Async b -&gt; NaviT e m ()
+forall a b.
+HasCallStack =&gt;
+((forall b. NaviT e m b -&gt; NaviT e m b) -&gt; NaviT e m a)
+-&gt; (Async a -&gt; NaviT e m b) -&gt; NaviT e m b
+forall {e} {m :: Type -&gt; Type}. MonadAsync m =&gt; Monad (NaviT e m)
+forall e (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+Int -&gt; NaviT e m a -&gt; NaviT e m (Async a)
+forall e (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+Int
+-&gt; ((forall b. NaviT e m b -&gt; NaviT e m b) -&gt; NaviT e m a)
+-&gt; NaviT e m (Async a)
+forall e (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+NaviT e m a -&gt; NaviT e m (Async a)
+forall e (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+(SomeException -&gt; Bool) -&gt; Async a -&gt; NaviT e m ()
+forall e (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+((forall b. NaviT e m b -&gt; NaviT e m b) -&gt; NaviT e m a)
+-&gt; NaviT e m (Async a)
+forall e (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+Int -&gt; NaviT e m a -&gt; (Async a -&gt; NaviT e m b) -&gt; NaviT e m b
+forall e (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+Int
+-&gt; ((forall b. NaviT e m b -&gt; NaviT e m b) -&gt; NaviT e m a)
+-&gt; (Async a -&gt; NaviT e m b)
+-&gt; NaviT e m b
+forall e (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m (Either a b)
+forall e (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m ()
+forall e (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m (a, b)
+forall e (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+NaviT e m a -&gt; (Async a -&gt; NaviT e m b) -&gt; NaviT e m b
+forall e (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+(SomeException -&gt; Bool) -&gt; Async a -&gt; Async b -&gt; NaviT e m ()
+forall e (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+((forall b. NaviT e m b -&gt; NaviT e m b) -&gt; NaviT e m a)
+-&gt; (Async a -&gt; NaviT e m b) -&gt; NaviT e m b
+forall (m :: Type -&gt; Type).
+Monad m
+-&gt; (forall a. HasCallStack =&gt; m a -&gt; m (Async a))
+-&gt; (forall a. HasCallStack =&gt; m a -&gt; m (Async a))
+-&gt; (forall a. HasCallStack =&gt; Int -&gt; m a -&gt; m (Async a))
+-&gt; (forall a.
+    HasCallStack =&gt;
+    ((forall b. m b -&gt; m b) -&gt; m a) -&gt; m (Async a))
+-&gt; (forall a.
+    HasCallStack =&gt;
+    Int -&gt; ((forall b. m b -&gt; m b) -&gt; m a) -&gt; m (Async a))
+-&gt; (forall a b. HasCallStack =&gt; m a -&gt; (Async a -&gt; m b) -&gt; m b)
+-&gt; (forall a b. HasCallStack =&gt; m a -&gt; (Async a -&gt; m b) -&gt; m b)
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    Int -&gt; m a -&gt; (Async a -&gt; m b) -&gt; m b)
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    ((forall b. m b -&gt; m b) -&gt; m a) -&gt; (Async a -&gt; m b) -&gt; m b)
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    Int -&gt; ((forall b. m b -&gt; m b) -&gt; m a) -&gt; (Async a -&gt; m b) -&gt; m b)
+-&gt; (forall a.
+    HasCallStack =&gt;
+    (SomeException -&gt; Bool) -&gt; Async a -&gt; m ())
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    (SomeException -&gt; Bool) -&gt; Async a -&gt; Async b -&gt; m ())
+-&gt; (forall a b. HasCallStack =&gt; m a -&gt; m b -&gt; m (Either a b))
+-&gt; (forall a b. HasCallStack =&gt; m a -&gt; m b -&gt; m (a, b))
+-&gt; (forall a b. HasCallStack =&gt; m a -&gt; m b -&gt; m ())
+-&gt; MonadAsync m
+concurrently_ :: forall a b.
+HasCallStack =&gt;
+NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m ()
+$cconcurrently_ :: forall e (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m ()
+concurrently :: forall a b.
+HasCallStack =&gt;
+NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m (a, b)
+$cconcurrently :: forall e (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m (a, b)
+race :: forall a b.
+HasCallStack =&gt;
+NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m (Either a b)
+$crace :: forall e (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+NaviT e m a -&gt; NaviT e m b -&gt; NaviT e m (Either a b)
+link2Only :: forall a b.
+HasCallStack =&gt;
+(SomeException -&gt; Bool) -&gt; Async a -&gt; Async b -&gt; NaviT e m ()
+$clink2Only :: forall e (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+(SomeException -&gt; Bool) -&gt; Async a -&gt; Async b -&gt; NaviT e m ()
+linkOnly :: forall a.
+HasCallStack =&gt;
+(SomeException -&gt; Bool) -&gt; Async a -&gt; NaviT e m ()
+$clinkOnly :: forall e (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+(SomeException -&gt; Bool) -&gt; Async a -&gt; NaviT e m ()
+withAsyncOnWithUnmask :: forall a b.
+HasCallStack =&gt;
+Int
+-&gt; ((forall b. NaviT e m b -&gt; NaviT e m b) -&gt; NaviT e m a)
+-&gt; (Async a -&gt; NaviT e m b)
+-&gt; NaviT e m b
+$cwithAsyncOnWithUnmask :: forall e (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+Int
+-&gt; ((forall b. NaviT e m b -&gt; NaviT e m b) -&gt; NaviT e m a)
+-&gt; (Async a -&gt; NaviT e m b)
+-&gt; NaviT e m b
+withAsyncWithUnmask :: forall a b.
+HasCallStack =&gt;
+((forall b. NaviT e m b -&gt; NaviT e m b) -&gt; NaviT e m a)
+-&gt; (Async a -&gt; NaviT e m b) -&gt; NaviT e m b
+$cwithAsyncWithUnmask :: forall e (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+((forall b. NaviT e m b -&gt; NaviT e m b) -&gt; NaviT e m a)
+-&gt; (Async a -&gt; NaviT e m b) -&gt; NaviT e m b
+withAsyncOn :: forall a b.
+HasCallStack =&gt;
+Int -&gt; NaviT e m a -&gt; (Async a -&gt; NaviT e m b) -&gt; NaviT e m b
+$cwithAsyncOn :: forall e (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+Int -&gt; NaviT e m a -&gt; (Async a -&gt; NaviT e m b) -&gt; NaviT e m b
+withAsyncBound :: forall a b.
+HasCallStack =&gt;
+NaviT e m a -&gt; (Async a -&gt; NaviT e m b) -&gt; NaviT e m b
+$cwithAsyncBound :: forall e (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+NaviT e m a -&gt; (Async a -&gt; NaviT e m b) -&gt; NaviT e m b
+withAsync :: forall a b.
+HasCallStack =&gt;
+NaviT e m a -&gt; (Async a -&gt; NaviT e m b) -&gt; NaviT e m b
+$cwithAsync :: forall e (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+NaviT e m a -&gt; (Async a -&gt; NaviT e m b) -&gt; NaviT e m b
+asyncOnWithUnmask :: forall a.
+HasCallStack =&gt;
+Int
+-&gt; ((forall b. NaviT e m b -&gt; NaviT e m b) -&gt; NaviT e m a)
+-&gt; NaviT e m (Async a)
+$casyncOnWithUnmask :: forall e (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+Int
+-&gt; ((forall b. NaviT e m b -&gt; NaviT e m b) -&gt; NaviT e m a)
+-&gt; NaviT e m (Async a)
+asyncWithUnmask :: forall a.
+HasCallStack =&gt;
+((forall b. NaviT e m b -&gt; NaviT e m b) -&gt; NaviT e m a)
+-&gt; NaviT e m (Async a)
+$casyncWithUnmask :: forall e (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+((forall b. NaviT e m b -&gt; NaviT e m b) -&gt; NaviT e m a)
+-&gt; NaviT e m (Async a)
+asyncOn :: forall a. HasCallStack =&gt; Int -&gt; NaviT e m a -&gt; NaviT e m (Async a)
+$casyncOn :: forall e (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+Int -&gt; NaviT e m a -&gt; NaviT e m (Async a)
+asyncBound :: forall a. HasCallStack =&gt; NaviT e m a -&gt; NaviT e m (Async a)
+$casyncBound :: forall e (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+NaviT e m a -&gt; NaviT e m (Async a)
+async :: forall a. HasCallStack =&gt; NaviT e m a -&gt; NaviT e m (Async a)
+$casync :: forall e (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+NaviT e m a -&gt; NaviT e m (Async a)
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">MonadAsync</span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-39"></span><span>      </span><span id="local-6989586621679312989"><span class="annot"><span class="annottext">forall e a.
+Exception e =&gt;
+NaviT e m a -&gt; (e -&gt; NaviT e m a) -&gt; NaviT e m a
+forall {e} {m :: Type -&gt; Type}.
+MonadCatch m =&gt;
+MonadThrow (NaviT e m)
+forall e (m :: Type -&gt; Type) e a.
+(MonadCatch m, Exception e) =&gt;
+NaviT e m a -&gt; (e -&gt; NaviT e m a) -&gt; NaviT e m a
+forall (m :: Type -&gt; Type).
+MonadThrow m
+-&gt; (forall e a. Exception e =&gt; m a -&gt; (e -&gt; m a) -&gt; m a)
+-&gt; MonadCatch m
+catch :: forall e a.
+Exception e =&gt;
+NaviT e m a -&gt; (e -&gt; NaviT e m a) -&gt; NaviT e m a
+$ccatch :: forall e (m :: Type -&gt; Type) e a.
+(MonadCatch m, Exception e) =&gt;
+NaviT e m a -&gt; (e -&gt; NaviT e m a) -&gt; NaviT e m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/exceptions-0.10.4/src/Control.Monad.Catch.html#C%3AMonadCatch"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var">MonadCatch</span></a></span></span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>      </span><span id="local-6989586621679312973"><span class="annot"><span class="annottext">HasCallStack =&gt; Path -&gt; NaviT e m ByteString
+forall {e} {m :: Type -&gt; Type}.
+MonadFileReader m =&gt;
+Monad (NaviT e m)
+forall e (m :: Type -&gt; Type).
+(MonadFileReader m, HasCallStack) =&gt;
+Path -&gt; NaviT e m ByteString
+forall (m :: Type -&gt; Type).
+Monad m
+-&gt; (HasCallStack =&gt; Path -&gt; m ByteString) -&gt; MonadFileReader m
+readBinaryFile :: HasCallStack =&gt; Path -&gt; NaviT e m ByteString
+$creadBinaryFile :: forall e (m :: Type -&gt; Type).
+(MonadFileReader m, HasCallStack) =&gt;
+Path -&gt; NaviT e m ByteString
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var">MonadFileReader</span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-41"></span><span>      </span><span id="local-6989586621679312865"><span id="local-6989586621679312874"><span id="local-6989586621679312883"><span id="local-6989586621679312892"><span id="local-6989586621679312901"><span id="local-6989586621679312910"><span id="local-6989586621679312919"><span id="local-6989586621679312928"><span id="local-6989586621679312937"><span id="local-6989586621679312946"><span id="local-6989586621679312956"><span class="annot"><span class="annottext">HasCallStack =&gt; Path -&gt; IOMode -&gt; NaviT e m Handle
+HasCallStack =&gt; Handle -&gt; NaviT e m Integer
+HasCallStack =&gt; Handle -&gt; NaviT e m ()
+HasCallStack =&gt; Handle -&gt; Bool -&gt; NaviT e m ()
+HasCallStack =&gt; Handle -&gt; Integer -&gt; NaviT e m ()
+HasCallStack =&gt; Handle -&gt; ByteString -&gt; NaviT e m ()
+HasCallStack =&gt; Handle -&gt; ByteString -&gt; NaviT e m ByteString
+HasCallStack =&gt; Handle -&gt; BufferMode -&gt; NaviT e m ()
+HasCallStack =&gt; Handle -&gt; SeekMode -&gt; Integer -&gt; NaviT e m ()
+forall a.
+HasCallStack =&gt;
+Path -&gt; IOMode -&gt; (Handle -&gt; NaviT e m a) -&gt; NaviT e m a
+forall {e} {m :: Type -&gt; Type}.
+MonadHandleWriter m =&gt;
+Monad (NaviT e m)
+forall e (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Path -&gt; IOMode -&gt; NaviT e m Handle
+forall e (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; NaviT e m Integer
+forall e (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; NaviT e m ()
+forall e (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; Bool -&gt; NaviT e m ()
+forall e (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; Integer -&gt; NaviT e m ()
+forall e (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; ByteString -&gt; NaviT e m ()
+forall e (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; ByteString -&gt; NaviT e m ByteString
+forall e (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; BufferMode -&gt; NaviT e m ()
+forall e (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; SeekMode -&gt; Integer -&gt; NaviT e m ()
+forall e (m :: Type -&gt; Type) a.
+(MonadHandleWriter m, HasCallStack) =&gt;
+Path -&gt; IOMode -&gt; (Handle -&gt; NaviT e m a) -&gt; NaviT e m a
+forall (m :: Type -&gt; Type).
+Monad m
+-&gt; (HasCallStack =&gt; Path -&gt; IOMode -&gt; m Handle)
+-&gt; (forall a.
+    HasCallStack =&gt;
+    Path -&gt; IOMode -&gt; (Handle -&gt; m a) -&gt; m a)
+-&gt; (HasCallStack =&gt; Handle -&gt; m ())
+-&gt; (HasCallStack =&gt; Handle -&gt; m ())
+-&gt; (HasCallStack =&gt; Handle -&gt; Integer -&gt; m ())
+-&gt; (HasCallStack =&gt; Handle -&gt; BufferMode -&gt; m ())
+-&gt; (HasCallStack =&gt; Handle -&gt; SeekMode -&gt; Integer -&gt; m ())
+-&gt; (HasCallStack =&gt; Handle -&gt; m Integer)
+-&gt; (HasCallStack =&gt; Handle -&gt; Bool -&gt; m ())
+-&gt; (HasCallStack =&gt; Handle -&gt; ByteString -&gt; m ())
+-&gt; (HasCallStack =&gt; Handle -&gt; ByteString -&gt; m ByteString)
+-&gt; MonadHandleWriter m
+hPutNonBlocking :: HasCallStack =&gt; Handle -&gt; ByteString -&gt; NaviT e m ByteString
+$chPutNonBlocking :: forall e (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; ByteString -&gt; NaviT e m ByteString
+hPut :: HasCallStack =&gt; Handle -&gt; ByteString -&gt; NaviT e m ()
+$chPut :: forall e (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; ByteString -&gt; NaviT e m ()
+hSetEcho :: HasCallStack =&gt; Handle -&gt; Bool -&gt; NaviT e m ()
+$chSetEcho :: forall e (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; Bool -&gt; NaviT e m ()
+hTell :: HasCallStack =&gt; Handle -&gt; NaviT e m Integer
+$chTell :: forall e (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; NaviT e m Integer
+hSeek :: HasCallStack =&gt; Handle -&gt; SeekMode -&gt; Integer -&gt; NaviT e m ()
+$chSeek :: forall e (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; SeekMode -&gt; Integer -&gt; NaviT e m ()
+hSetBuffering :: HasCallStack =&gt; Handle -&gt; BufferMode -&gt; NaviT e m ()
+$chSetBuffering :: forall e (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; BufferMode -&gt; NaviT e m ()
+hSetFileSize :: HasCallStack =&gt; Handle -&gt; Integer -&gt; NaviT e m ()
+$chSetFileSize :: forall e (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; Integer -&gt; NaviT e m ()
+hFlush :: HasCallStack =&gt; Handle -&gt; NaviT e m ()
+$chFlush :: forall e (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; NaviT e m ()
+hClose :: HasCallStack =&gt; Handle -&gt; NaviT e m ()
+$chClose :: forall e (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; NaviT e m ()
+withBinaryFile :: forall a.
+HasCallStack =&gt;
+Path -&gt; IOMode -&gt; (Handle -&gt; NaviT e m a) -&gt; NaviT e m a
+$cwithBinaryFile :: forall e (m :: Type -&gt; Type) a.
+(MonadHandleWriter m, HasCallStack) =&gt;
+Path -&gt; IOMode -&gt; (Handle -&gt; NaviT e m a) -&gt; NaviT e m a
+openBinaryFile :: HasCallStack =&gt; Path -&gt; IOMode -&gt; NaviT e m Handle
+$copenBinaryFile :: forall e (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Path -&gt; IOMode -&gt; NaviT e m Handle
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">MonadHandleWriter</span></span></span></span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-42"></span><span>      </span><span id="local-6989586621679312851"><span class="annot"><span class="annottext">forall a. IO a -&gt; NaviT e m a
+forall {e} {m :: Type -&gt; Type}. MonadIO m =&gt; Monad (NaviT e m)
+forall e (m :: Type -&gt; Type) a. MonadIO m =&gt; IO a -&gt; NaviT e m a
+forall (m :: Type -&gt; Type).
+Monad m -&gt; (forall a. IO a -&gt; m a) -&gt; MonadIO m
+liftIO :: forall a. IO a -&gt; NaviT e m a
+$cliftIO :: forall e (m :: Type -&gt; Type) a. MonadIO m =&gt; IO a -&gt; NaviT e m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Control.Monad.IO.Class.html#C%3AMonadIO"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var">MonadIO</span></a></span></span><span class="hs-special">,</span><span>
+</span><span id="line-43"></span><span>      </span><span id="local-6989586621679312791"><span id="local-6989586621679312800"><span id="local-6989586621679312809"><span id="local-6989586621679312818"><span id="local-6989586621679312827"><span id="local-6989586621679312837"><span class="annot"><span class="annottext">forall a. HasCallStack =&gt; a -&gt; NaviT e m (IORef a)
+forall a. HasCallStack =&gt; IORef a -&gt; NaviT e m a
+forall a. HasCallStack =&gt; IORef a -&gt; a -&gt; NaviT e m ()
+forall a. HasCallStack =&gt; IORef a -&gt; (a -&gt; a) -&gt; NaviT e m ()
+forall a b. HasCallStack =&gt; IORef a -&gt; (a -&gt; (a, b)) -&gt; NaviT e m b
+forall {e} {m :: Type -&gt; Type}. MonadIORef m =&gt; Monad (NaviT e m)
+forall e (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+a -&gt; NaviT e m (IORef a)
+forall e (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+IORef a -&gt; NaviT e m a
+forall e (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+IORef a -&gt; a -&gt; NaviT e m ()
+forall e (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+IORef a -&gt; (a -&gt; a) -&gt; NaviT e m ()
+forall e (m :: Type -&gt; Type) a b.
+(MonadIORef m, HasCallStack) =&gt;
+IORef a -&gt; (a -&gt; (a, b)) -&gt; NaviT e m b
+forall (m :: Type -&gt; Type).
+Monad m
+-&gt; (forall a. HasCallStack =&gt; a -&gt; m (IORef a))
+-&gt; (forall a. HasCallStack =&gt; IORef a -&gt; m a)
+-&gt; (forall a. HasCallStack =&gt; IORef a -&gt; a -&gt; m ())
+-&gt; (forall a. HasCallStack =&gt; IORef a -&gt; a -&gt; m ())
+-&gt; (forall a. HasCallStack =&gt; IORef a -&gt; (a -&gt; a) -&gt; m ())
+-&gt; (forall a b. HasCallStack =&gt; IORef a -&gt; (a -&gt; (a, b)) -&gt; m b)
+-&gt; MonadIORef m
+atomicModifyIORef' :: forall a b. HasCallStack =&gt; IORef a -&gt; (a -&gt; (a, b)) -&gt; NaviT e m b
+$catomicModifyIORef' :: forall e (m :: Type -&gt; Type) a b.
+(MonadIORef m, HasCallStack) =&gt;
+IORef a -&gt; (a -&gt; (a, b)) -&gt; NaviT e m b
+modifyIORef' :: forall a. HasCallStack =&gt; IORef a -&gt; (a -&gt; a) -&gt; NaviT e m ()
+$cmodifyIORef' :: forall e (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+IORef a -&gt; (a -&gt; a) -&gt; NaviT e m ()
+atomicWriteIORef :: forall a. HasCallStack =&gt; IORef a -&gt; a -&gt; NaviT e m ()
+$catomicWriteIORef :: forall e (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+IORef a -&gt; a -&gt; NaviT e m ()
+writeIORef :: forall a. HasCallStack =&gt; IORef a -&gt; a -&gt; NaviT e m ()
+$cwriteIORef :: forall e (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+IORef a -&gt; a -&gt; NaviT e m ()
+readIORef :: forall a. HasCallStack =&gt; IORef a -&gt; NaviT e m a
+$creadIORef :: forall e (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+IORef a -&gt; NaviT e m a
+newIORef :: forall a. HasCallStack =&gt; a -&gt; NaviT e m (IORef a)
+$cnewIORef :: forall e (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+a -&gt; NaviT e m (IORef a)
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">MonadIORef</span></span></span></span></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-44"></span><span>      </span><span id="local-6989586621679312768"><span id="local-6989586621679312772"><span id="local-6989586621679312777"><span class="annot"><span class="annottext">forall b.
+((forall a. NaviT e m a -&gt; NaviT e m a) -&gt; NaviT e m b)
+-&gt; NaviT e m b
+forall a b c.
+NaviT e m a
+-&gt; (a -&gt; ExitCase b -&gt; NaviT e m c)
+-&gt; (a -&gt; NaviT e m b)
+-&gt; NaviT e m (b, c)
+forall {e} {m :: Type -&gt; Type}.
+MonadMask m =&gt;
+MonadCatch (NaviT e m)
+forall e (m :: Type -&gt; Type) b.
+MonadMask m =&gt;
+((forall a. NaviT e m a -&gt; NaviT e m a) -&gt; NaviT e m b)
+-&gt; NaviT e m b
+forall e (m :: Type -&gt; Type) a b c.
+MonadMask m =&gt;
+NaviT e m a
+-&gt; (a -&gt; ExitCase b -&gt; NaviT e m c)
+-&gt; (a -&gt; NaviT e m b)
+-&gt; NaviT e m (b, c)
+forall (m :: Type -&gt; Type).
+MonadCatch m
+-&gt; (forall b. ((forall a. m a -&gt; m a) -&gt; m b) -&gt; m b)
+-&gt; (forall b. ((forall a. m a -&gt; m a) -&gt; m b) -&gt; m b)
+-&gt; (forall a b c.
+    m a -&gt; (a -&gt; ExitCase b -&gt; m c) -&gt; (a -&gt; m b) -&gt; m (b, c))
+-&gt; MonadMask m
+generalBracket :: forall a b c.
+NaviT e m a
+-&gt; (a -&gt; ExitCase b -&gt; NaviT e m c)
+-&gt; (a -&gt; NaviT e m b)
+-&gt; NaviT e m (b, c)
+$cgeneralBracket :: forall e (m :: Type -&gt; Type) a b c.
+MonadMask m =&gt;
+NaviT e m a
+-&gt; (a -&gt; ExitCase b -&gt; NaviT e m c)
+-&gt; (a -&gt; NaviT e m b)
+-&gt; NaviT e m (b, c)
+uninterruptibleMask :: forall b.
+((forall a. NaviT e m a -&gt; NaviT e m a) -&gt; NaviT e m b)
+-&gt; NaviT e m b
+$cuninterruptibleMask :: forall e (m :: Type -&gt; Type) b.
+MonadMask m =&gt;
+((forall a. NaviT e m a -&gt; NaviT e m a) -&gt; NaviT e m b)
+-&gt; NaviT e m b
+mask :: forall b.
+((forall a. NaviT e m a -&gt; NaviT e m a) -&gt; NaviT e m b)
+-&gt; NaviT e m b
+$cmask :: forall e (m :: Type -&gt; Type) b.
+MonadMask m =&gt;
+((forall a. NaviT e m a -&gt; NaviT e m a) -&gt; NaviT e m b)
+-&gt; NaviT e m b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/exceptions-0.10.4/src/Control.Monad.Catch.html#C%3AMonadMask"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">MonadMask</span></a></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-45"></span><span>      </span><span id="local-6989586621679312749"><span id="local-6989586621679312753"><span id="local-6989586621679312758"><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/mtl-2.2.2/src/Control.Monad.Reader.Class.html#MonadReader"><span class="hs-identifier hs-type">MonadReader</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679313558"><span class="hs-identifier hs-type">e</span></a></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-46"></span><span>      </span><span id="local-6989586621679312737"><span class="annot"><span class="annottext">forall a. HasCallStack =&gt; STM a -&gt; NaviT e m a
+forall {e} {m :: Type -&gt; Type}. MonadSTM m =&gt; Monad (NaviT e m)
+forall e (m :: Type -&gt; Type) a.
+(MonadSTM m, HasCallStack) =&gt;
+STM a -&gt; NaviT e m a
+forall (m :: Type -&gt; Type).
+Monad m -&gt; (forall a. HasCallStack =&gt; STM a -&gt; m a) -&gt; MonadSTM m
+atomically :: forall a. HasCallStack =&gt; STM a -&gt; NaviT e m a
+$catomically :: forall e (m :: Type -&gt; Type) a.
+(MonadSTM m, HasCallStack) =&gt;
+STM a -&gt; NaviT e m a
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var">MonadSTM</span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-47"></span><span>      </span><span id="local-6989586621679312679"><span id="local-6989586621679312688"><span id="local-6989586621679312697"><span id="local-6989586621679312708"><span id="local-6989586621679312720"><span class="annot"><span class="annottext">HasCallStack =&gt; NaviT e m Int
+HasCallStack =&gt; Int -&gt; NaviT e m ()
+HasCallStack =&gt; ThreadId -&gt; NaviT e m (Int, Bool)
+forall e.
+(Exception e, HasCallStack) =&gt;
+ThreadId -&gt; e -&gt; NaviT e m ()
+forall {e} {m :: Type -&gt; Type}. MonadThread m =&gt; Monad (NaviT e m)
+forall e (m :: Type -&gt; Type).
+(MonadThread m, HasCallStack) =&gt;
+NaviT e m Int
+forall e (m :: Type -&gt; Type).
+(MonadThread m, HasCallStack) =&gt;
+Int -&gt; NaviT e m ()
+forall e (m :: Type -&gt; Type).
+(MonadThread m, HasCallStack) =&gt;
+ThreadId -&gt; NaviT e m (Int, Bool)
+forall e (m :: Type -&gt; Type) e.
+(MonadThread m, Exception e, HasCallStack) =&gt;
+ThreadId -&gt; e -&gt; NaviT e m ()
+forall (m :: Type -&gt; Type).
+Monad m
+-&gt; (HasCallStack =&gt; Int -&gt; m ())
+-&gt; (forall e. (Exception e, HasCallStack) =&gt; ThreadId -&gt; e -&gt; m ())
+-&gt; (HasCallStack =&gt; m Int)
+-&gt; (HasCallStack =&gt; Int -&gt; m ())
+-&gt; (HasCallStack =&gt; ThreadId -&gt; m (Int, Bool))
+-&gt; MonadThread m
+threadCapability :: HasCallStack =&gt; ThreadId -&gt; NaviT e m (Int, Bool)
+$cthreadCapability :: forall e (m :: Type -&gt; Type).
+(MonadThread m, HasCallStack) =&gt;
+ThreadId -&gt; NaviT e m (Int, Bool)
+setNumCapabilities :: HasCallStack =&gt; Int -&gt; NaviT e m ()
+$csetNumCapabilities :: forall e (m :: Type -&gt; Type).
+(MonadThread m, HasCallStack) =&gt;
+Int -&gt; NaviT e m ()
+getNumCapabilities :: HasCallStack =&gt; NaviT e m Int
+$cgetNumCapabilities :: forall e (m :: Type -&gt; Type).
+(MonadThread m, HasCallStack) =&gt;
+NaviT e m Int
+throwTo :: forall e.
+(Exception e, HasCallStack) =&gt;
+ThreadId -&gt; e -&gt; NaviT e m ()
+$cthrowTo :: forall e (m :: Type -&gt; Type) e.
+(MonadThread m, Exception e, HasCallStack) =&gt;
+ThreadId -&gt; e -&gt; NaviT e m ()
+threadDelay :: HasCallStack =&gt; Int -&gt; NaviT e m ()
+$cthreadDelay :: forall e (m :: Type -&gt; Type).
+(MonadThread m, HasCallStack) =&gt;
+Int -&gt; NaviT e m ()
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">MonadThread</span></span></span></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-48"></span><span>      </span><span id="local-6989586621679312663"><span class="annot"><span class="annottext">forall e a. Exception e =&gt; e -&gt; NaviT e m a
+forall {e} {m :: Type -&gt; Type}. MonadThrow m =&gt; Monad (NaviT e m)
+forall e (m :: Type -&gt; Type) e a.
+(MonadThrow m, Exception e) =&gt;
+e -&gt; NaviT e m a
+forall (m :: Type -&gt; Type).
+Monad m -&gt; (forall e a. Exception e =&gt; e -&gt; m a) -&gt; MonadThrow m
+throwM :: forall e a. Exception e =&gt; e -&gt; NaviT e m a
+$cthrowM :: forall e (m :: Type -&gt; Type) e a.
+(MonadThrow m, Exception e) =&gt;
+e -&gt; NaviT e m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/exceptions-0.10.4/src/Control.Monad.Catch.html#C%3AMonadThrow"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var">MonadThrow</span></a></span></span><span>
+</span><span id="line-49"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-50"></span><span>    </span><span class="hs-keyword">via</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/transformers-0.5.6.2/src/Control.Monad.Trans.Reader.html#ReaderT"><span class="hs-identifier hs-type">ReaderT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679313558"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679313559"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-51"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679312652"><span class="annot"><span class="annottext">forall e (m :: Type -&gt; Type) a. Monad m =&gt; m a -&gt; NaviT e m a
+forall (m :: Type -&gt; Type) a. Monad m =&gt; m a -&gt; NaviT e m a
+forall (t :: (Type -&gt; Type) -&gt; Type -&gt; Type).
+(forall (m :: Type -&gt; Type) a. Monad m =&gt; m a -&gt; t m a)
+-&gt; MonadTrans t
+lift :: forall (m :: Type -&gt; Type) a. Monad m =&gt; m a -&gt; NaviT e m a
+$clift :: forall e (m :: Type -&gt; Type) a. Monad m =&gt; m a -&gt; NaviT e m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/transformers-0.5.6.2/src/Control.Monad.Trans.Class.html#C%3AMonadTrans"><span class="hs-identifier hs-var hs-var hs-var hs-var">MonadTrans</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">via</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/transformers-0.5.6.2/src/Control.Monad.Trans.Reader.html#ReaderT"><span class="hs-identifier hs-type">ReaderT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679313558"><span class="hs-identifier hs-type">e</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-52"></span><span>
+</span><span id="line-53"></span><span class="hs-comment">-- Manual instances so tests can roll their own</span><span>
+</span><span id="line-54"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679313324"><span class="annot"><span class="hs-identifier hs-type">MonadTerminal</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.NaviT.html#NaviT"><span class="hs-identifier hs-type">NaviT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679313324"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span class="hs-special">)</span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-55"></span><span>  </span><span id="local-6989586621679312623"><span class="annot"><span class="annottext">getChar :: HasCallStack =&gt; NaviT env IO Char
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">getChar</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a. MonadIO m =&gt; IO a -&gt; m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Control.Monad.IO.Class.html#liftIO"><span class="hs-identifier hs-var">liftIO</span></a></span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type).
+(MonadTerminal m, HasCallStack) =&gt;
+m Char
+</span><span class="hs-identifier hs-var">getChar</span></span><span>
+</span><span id="line-56"></span><span>  </span><span id="local-6989586621679312614"><span class="annot"><span class="annottext">getLine :: HasCallStack =&gt; NaviT env IO Path
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">getLine</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a. MonadIO m =&gt; IO a -&gt; m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Control.Monad.IO.Class.html#liftIO"><span class="hs-identifier hs-var">liftIO</span></a></span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type).
+(MonadTerminal m, HasCallStack) =&gt;
+m Path
+</span><span class="hs-identifier hs-var">getLine</span></span><span>
+</span><span id="line-57"></span><span>  </span><span id="local-6989586621679312606"><span class="annot"><span class="annottext">getContents' :: HasCallStack =&gt; NaviT env IO Path
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">getContents'</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a. MonadIO m =&gt; IO a -&gt; m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Control.Monad.IO.Class.html#liftIO"><span class="hs-identifier hs-var">liftIO</span></a></span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type).
+(MonadTerminal m, HasCallStack) =&gt;
+m Path
+</span><span class="hs-identifier hs-var">getContents'</span></span><span>
+</span><span id="line-58"></span><span>  </span><span id="local-6989586621679312598"><span class="annot"><span class="annottext">getTerminalSize :: HasCallStack =&gt; NaviT env IO (Window Natural)
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">getTerminalSize</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a. MonadIO m =&gt; IO a -&gt; m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Control.Monad.IO.Class.html#liftIO"><span class="hs-identifier hs-var">liftIO</span></a></span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type).
+(MonadTerminal m, HasCallStack) =&gt;
+m (Window Natural)
+</span><span class="hs-identifier hs-var">getTerminalSize</span></span><span>
+</span><span id="line-59"></span><span>  </span><span id="local-6989586621679312590"><span class="annot"><span class="annottext">putBinary :: HasCallStack =&gt; ByteString -&gt; NaviT env IO ()
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">putBinary</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a. MonadIO m =&gt; IO a -&gt; m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Control.Monad.IO.Class.html#liftIO"><span class="hs-identifier hs-var">liftIO</span></a></span><span> </span><span class="annot"><span class="annottext">forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#."><span class="hs-operator hs-var">.</span></a></span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type).
+(MonadTerminal m, HasCallStack) =&gt;
+ByteString -&gt; m ()
+</span><span class="hs-identifier hs-var">putBinary</span></span><span>
+</span><span id="line-60"></span><span>  </span><span id="local-6989586621679312581"><span class="annot"><span class="annottext">putStr :: HasCallStack =&gt; Path -&gt; NaviT env IO ()
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">putStr</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a. MonadIO m =&gt; IO a -&gt; m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Control.Monad.IO.Class.html#liftIO"><span class="hs-identifier hs-var">liftIO</span></a></span><span> </span><span class="annot"><span class="annottext">forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#."><span class="hs-operator hs-var">.</span></a></span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type).
+(MonadTerminal m, HasCallStack) =&gt;
+Path -&gt; m ()
+</span><span class="hs-identifier hs-var">putStr</span></span><span>
+</span><span id="line-61"></span><span>  </span><span id="local-6989586621679312573"><span class="annot"><span class="annottext">putStrLn :: HasCallStack =&gt; Path -&gt; NaviT env IO ()
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">putStrLn</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a. MonadIO m =&gt; IO a -&gt; m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Control.Monad.IO.Class.html#liftIO"><span class="hs-identifier hs-var">liftIO</span></a></span><span> </span><span class="annot"><span class="annottext">forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#."><span class="hs-operator hs-var">.</span></a></span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type).
+(MonadTerminal m, HasCallStack) =&gt;
+Path -&gt; m ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span>
+</span><span id="line-62"></span><span>
+</span><span id="line-63"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679313316"><span class="annot"><span class="hs-identifier hs-type">MonadTime</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.NaviT.html#NaviT"><span class="hs-identifier hs-type">NaviT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679313316"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span class="hs-special">)</span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-64"></span><span>  </span><span id="local-6989586621679312557"><span class="annot"><span class="annottext">getSystemZonedTime :: HasCallStack =&gt; NaviT env IO ZonedTime
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">getSystemZonedTime</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a. MonadIO m =&gt; IO a -&gt; m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Control.Monad.IO.Class.html#liftIO"><span class="hs-identifier hs-var">liftIO</span></a></span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type).
+(MonadTime m, HasCallStack) =&gt;
+m ZonedTime
+</span><span class="hs-identifier hs-var">getSystemZonedTime</span></span><span>
+</span><span id="line-65"></span><span>  </span><span id="local-6989586621679312549"><span class="annot"><span class="annottext">getMonotonicTime :: HasCallStack =&gt; NaviT env IO Double
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">getMonotonicTime</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a. MonadIO m =&gt; IO a -&gt; m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Control.Monad.IO.Class.html#liftIO"><span class="hs-identifier hs-var">liftIO</span></a></span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type). (MonadTime m, HasCallStack) =&gt; m Double
+</span><span class="hs-identifier hs-var">getMonotonicTime</span></span><span>
+</span><span id="line-66"></span><span>
+</span><span id="line-67"></span><span class="hs-comment">-- Concrete IO rather than MonadIO so that we can write instances over</span><span>
+</span><span id="line-68"></span><span class="hs-comment">-- other MonadIOs (i.e. in tests)</span><span>
+</span><span id="line-69"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679313310"><span class="annot"><a href="Navi.Effects.MonadSystemInfo.html#MonadSystemInfo"><span class="hs-identifier hs-type">MonadSystemInfo</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.NaviT.html#NaviT"><span class="hs-identifier hs-type">NaviT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679313310"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span class="hs-special">)</span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-70"></span><span>  </span><span id="local-6989586621679312534"><span class="annot"><span class="annottext">query :: forall result.
+HasCallStack =&gt;
+ServiceType result -&gt; NaviT env IO result
+</span><a href="Navi.Effects.MonadSystemInfo.html#query"><span class="hs-identifier hs-var hs-var hs-var hs-var">query</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a. MonadIO m =&gt; IO a -&gt; m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Control.Monad.IO.Class.html#liftIO"><span class="hs-identifier hs-var">liftIO</span></a></span><span> </span><span class="annot"><span class="annottext">forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#."><span class="hs-operator hs-var">.</span></a></span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) result.
+(MonadSystemInfo m, HasCallStack) =&gt;
+ServiceType result -&gt; m result
+</span><a href="Navi.Effects.MonadSystemInfo.html#query"><span class="hs-identifier hs-var">query</span></a></span><span>
+</span><span id="line-71"></span><span>  </span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Navi.Effects.MonadSystemInfo.html#query"><span class="hs-pragma hs-type">query</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-72"></span><span>
+</span><span id="line-73"></span><span class="hs-comment">-- Concrete IO rather than MonadIO so that we can write instances over</span><span>
+</span><span id="line-74"></span><span class="hs-comment">-- other MonadIOs (i.e. in tests)</span><span>
+</span><span id="line-75"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Navi.Effects.MonadNotify.html#MonadNotify"><span class="hs-identifier hs-type">MonadNotify</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.NaviT.html#NaviT"><span class="hs-identifier hs-type">NaviT</span></a></span><span> </span><span class="annot"><a href="Navi.Env.DBus.html#DBusEnv"><span class="hs-identifier hs-type">DBusEnv</span></a></span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-76"></span><span>  </span><span id="local-6989586621679312494"><span class="annot"><span class="annottext">sendNote :: HasCallStack =&gt; NaviNote -&gt; NaviT DBusEnv IO ()
+</span><a href="Navi.Effects.MonadNotify.html#sendNote"><span class="hs-identifier hs-var hs-var hs-var hs-var">sendNote</span></a></span></span><span> </span><span id="local-6989586621679312492"><span class="annot"><span class="annottext">NaviNote
+</span><a href="#local-6989586621679312492"><span class="hs-identifier hs-var">naviNote</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a.
+MonadLoggerNamespace m =&gt;
+Text -&gt; m a -&gt; m a
+</span><span class="hs-identifier hs-var">addNamespace</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;dbus&quot;</span></span><span> </span><span class="annot"><span class="annottext">forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-77"></span><span>    </span><span class="hs-special">$</span><span class="hs-special">(</span><span class="hs-identifier">logDebug</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">forall a. Show a =&gt; a -&gt; Text
+</span><a href="Navi.Prelude.html#showt"><span class="hs-identifier hs-var">showt</span></a></span><span> </span><span class="annot"><span class="annottext">Note
+</span><a href="#local-6989586621679312485"><span class="hs-identifier hs-var">note</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-78"></span><span>    </span><span id="local-6989586621679312484"><span class="annot"><span class="annottext">Client
+</span><a href="#local-6989586621679312484"><span class="hs-identifier hs-var">client</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">forall r (m :: Type -&gt; Type) a. MonadReader r m =&gt; (r -&gt; a) -&gt; m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/mtl-2.2.2/src/Control.Monad.Reader.Class.html#asks"><span class="hs-identifier hs-var">asks</span></a></span><span> </span><span class="annot"><span class="annottext">forall env. HasDBusClient env =&gt; env -&gt; Client
+</span><a href="Navi.Env.DBus.html#getClient"><span class="hs-identifier hs-var">getClient</span></a></span><span>
+</span><span id="line-79"></span><span>    </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a. MonadIO m =&gt; IO a -&gt; m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Control.Monad.IO.Class.html#liftIO"><span class="hs-identifier hs-var">liftIO</span></a></span><span> </span><span class="annot"><span class="annottext">forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a.
+(HasCallStack, MonadCatch m) =&gt;
+m a -&gt; m a
+</span><span class="hs-identifier hs-var">addCS</span></span><span> </span><span class="annot"><span class="annottext">forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">Client -&gt; Note -&gt; IO ()
+</span><a href="#local-6989586621679312480"><span class="hs-identifier hs-var">sendDbus</span></a></span><span> </span><span class="annot"><span class="annottext">Client
+</span><a href="#local-6989586621679312484"><span class="hs-identifier hs-var">client</span></a></span><span> </span><span class="annot"><span class="annottext">Note
+</span><a href="#local-6989586621679312485"><span class="hs-identifier hs-var">note</span></a></span><span>
+</span><span id="line-80"></span><span>    </span><span class="hs-keyword">where</span><span>
+</span><span id="line-81"></span><span>      </span><span id="local-6989586621679312485"><span class="annot"><span class="annottext">note :: Note
+</span><a href="#local-6989586621679312485"><span class="hs-identifier hs-var hs-var">note</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NaviNote -&gt; Note
+</span><a href="Navi.Env.DBus.html#naviToDBus"><span class="hs-identifier hs-var">naviToDBus</span></a></span><span> </span><span class="annot"><span class="annottext">NaviNote
+</span><a href="#local-6989586621679312492"><span class="hs-identifier hs-var">naviNote</span></a></span><span>
+</span><span id="line-82"></span><span>      </span><span id="local-6989586621679312480"><span class="annot"><span class="annottext">sendDbus :: Client -&gt; Note -&gt; IO ()
+</span><a href="#local-6989586621679312480"><span class="hs-identifier hs-var hs-var">sendDbus</span></a></span></span><span> </span><span id="local-6989586621679312478"><span class="annot"><span class="annottext">Client
+</span><a href="#local-6989586621679312478"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a. Functor f =&gt; f a -&gt; f ()
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Data.Functor.html#void"><span class="hs-identifier hs-var">void</span></a></span><span> </span><span class="annot"><span class="annottext">forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#."><span class="hs-operator hs-var">.</span></a></span><span> </span><span class="annot"><span class="annottext">Client -&gt; Note -&gt; IO Notification
+</span><a href="file:///nix/store/sgvfmc97njjj54rz5cmlkhndh5cc9zb9-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html#notify"><span class="hs-identifier hs-var">DBusN.notify</span></a></span><span> </span><span class="annot"><span class="annottext">Client
+</span><a href="#local-6989586621679312478"><span class="hs-identifier hs-var">c</span></a></span><span>
+</span><span id="line-83"></span><span>  </span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Navi.Effects.MonadNotify.html#sendNote"><span class="hs-pragma hs-type">sendNote</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-84"></span><span>
+</span><span id="line-85"></span><span class="hs-comment">-- Concrete IO rather than MonadIO so that we can write instances over</span><span>
+</span><span id="line-86"></span><span class="hs-comment">-- other MonadIOs (i.e. in tests)</span><span>
+</span><span id="line-87"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Navi.Effects.MonadNotify.html#MonadNotify"><span class="hs-identifier hs-type">MonadNotify</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.NaviT.html#NaviT"><span class="hs-identifier hs-type">NaviT</span></a></span><span> </span><span class="annot"><a href="Navi.Env.NotifySend.html#NotifySendEnv"><span class="hs-identifier hs-type">NotifySendEnv</span></a></span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-88"></span><span>  </span><span id="local-6989586621679312453"><span class="annot"><span class="annottext">sendNote :: HasCallStack =&gt; NaviNote -&gt; NaviT NotifySendEnv IO ()
+</span><a href="#local-6989586621679312453"><span class="hs-identifier hs-var hs-var hs-var hs-var">sendNote</span></a></span></span><span> </span><span id="local-6989586621679312452"><span class="annot"><span class="annottext">NaviNote
+</span><a href="#local-6989586621679312452"><span class="hs-identifier hs-var">naviNote</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a.
+MonadLoggerNamespace m =&gt;
+Text -&gt; m a -&gt; m a
+</span><span class="hs-identifier hs-var">addNamespace</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;notify-send&quot;</span></span><span> </span><span class="annot"><span class="annottext">forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-89"></span><span>    </span><span class="hs-special">$</span><span class="hs-special">(</span><span class="hs-identifier">logDebug</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679312451"><span class="hs-identifier hs-var">noteTxt</span></a></span><span>
+</span><span id="line-90"></span><span>    </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a. MonadIO m =&gt; IO a -&gt; m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Control.Monad.IO.Class.html#liftIO"><span class="hs-identifier hs-var">liftIO</span></a></span><span> </span><span class="annot"><span class="annottext">forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a.
+(HasCallStack, MonadCatch m) =&gt;
+m a -&gt; m a
+</span><span class="hs-identifier hs-var">addCS</span></span><span> </span><span class="annot"><span class="annottext">forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a. Functor f =&gt; f a -&gt; f ()
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Data.Functor.html#void"><span class="hs-identifier hs-var">void</span></a></span><span> </span><span class="annot"><span class="annottext">forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">CreateProcess -&gt; Path -&gt; IO Path
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/process-1.6.16.0/src/System.Process.html#readCreateProcess"><span class="hs-identifier hs-var">Proc.readCreateProcess</span></a></span><span> </span><span class="annot"><span class="annottext">CreateProcess
+</span><a href="#local-6989586621679312449"><span class="hs-identifier hs-var">cp</span></a></span><span> </span><span class="annot"><span class="annottext">Path
+</span><span class="hs-string">&quot;notify-send&quot;</span></span><span>
+</span><span id="line-91"></span><span>    </span><span class="hs-keyword">where</span><span>
+</span><span id="line-92"></span><span>      </span><span id="local-6989586621679312451"><span class="annot"><span class="annottext">noteTxt :: Text
+</span><a href="#local-6989586621679312451"><span class="hs-identifier hs-var hs-var">noteTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NaviNote -&gt; Text
+</span><a href="Navi.Env.NotifySend.html#naviToNotifySend"><span class="hs-identifier hs-var">naviToNotifySend</span></a></span><span> </span><span class="annot"><span class="annottext">NaviNote
+</span><a href="#local-6989586621679312452"><span class="hs-identifier hs-var">naviNote</span></a></span><span>
+</span><span id="line-93"></span><span>      </span><span id="local-6989586621679312449"><span class="annot"><span class="annottext">cp :: CreateProcess
+</span><a href="#local-6989586621679312449"><span class="hs-identifier hs-var hs-var">cp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Path -&gt; CreateProcess
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/process-1.6.16.0/src/System.Process.html#shell"><span class="hs-identifier hs-var">Proc.shell</span></a></span><span> </span><span class="annot"><span class="annottext">forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Path
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Show.html#unpack"><span class="hs-identifier hs-var">unpack</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679312451"><span class="hs-identifier hs-var">noteTxt</span></a></span><span>
+</span><span id="line-94"></span><span>  </span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Navi.Effects.MonadNotify.html#sendNote"><span class="hs-pragma hs-type">sendNote</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-95"></span><span>
+</span><span id="line-96"></span><span class="hs-comment">-- Concrete IO rather than MonadIO so that we can write instances over</span><span>
+</span><span id="line-97"></span><span class="hs-comment">-- other MonadIOs (i.e. in tests)</span><span>
+</span><span id="line-98"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-99"></span><span>  </span><span id="local-6989586621679313295"><span class="hs-special">(</span><span> </span><span class="annot"><a href="Navi.Env.Core.html#HasLogEnv"><span class="hs-identifier hs-type">HasLogEnv</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679313295"><span class="hs-identifier hs-type">env</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-100"></span><span>    </span><span class="annot"><a href="Navi.Env.Core.html#HasLogQueue"><span class="hs-identifier hs-type">HasLogQueue</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679313295"><span class="hs-identifier hs-type">env</span></a></span><span>
+</span><span id="line-101"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-102"></span><span>  </span><span class="annot"><a href="file:///nix/store/br4w37fjs3s1bf4rmz0zvni4785ihf50-monad-logger-0.3.37-doc/share/doc/monad-logger-0.3.37/html/src/Control.Monad.Logger.html#MonadLogger"><span class="hs-identifier hs-type">MonadLogger</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.NaviT.html#NaviT"><span class="hs-identifier hs-type">NaviT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679313295"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-103"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-104"></span><span>  </span><span id="local-6989586621679312404"><span class="annot"><span class="annottext">monadLoggerLog :: forall msg.
+ToLogStr msg =&gt;
+Loc -&gt; Text -&gt; LogLevel -&gt; msg -&gt; NaviT env IO ()
+</span><a href="#local-6989586621679312404"><span class="hs-identifier hs-var hs-var hs-var hs-var">monadLoggerLog</span></a></span></span><span> </span><span id="local-6989586621679312403"><span class="annot"><span class="annottext">Loc
+</span><a href="#local-6989586621679312403"><span class="hs-identifier hs-var">loc</span></a></span></span><span> </span><span id="local-6989586621679312402"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679312402"><span class="hs-identifier hs-var">_src</span></a></span></span><span> </span><span id="local-6989586621679312401"><span class="annot"><span class="annottext">LogLevel
+</span><a href="#local-6989586621679312401"><span class="hs-identifier hs-var">lvl</span></a></span></span><span> </span><span id="local-6989586621679312400"><span class="annot"><span class="annottext">msg
+</span><a href="#local-6989586621679312400"><span class="hs-identifier hs-var">msg</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-105"></span><span>    </span><span id="local-6989586621679312399"><span class="annot"><span class="annottext">TBQueue LogStr
+</span><a href="#local-6989586621679312399"><span class="hs-identifier hs-var">logQueue</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">forall r (m :: Type -&gt; Type) a. MonadReader r m =&gt; (r -&gt; a) -&gt; m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/mtl-2.2.2/src/Control.Monad.Reader.Class.html#asks"><span class="hs-identifier hs-var">asks</span></a></span><span> </span><span class="annot"><span class="annottext">forall env. HasLogQueue env =&gt; env -&gt; TBQueue LogStr
+</span><a href="Navi.Env.Core.html#getLogQueue"><span class="hs-identifier hs-var">getLogQueue</span></a></span><span>
+</span><span id="line-106"></span><span>    </span><span id="local-6989586621679312398"><span class="annot"><span class="annottext">LogLevel
+</span><a href="#local-6989586621679312398"><span class="hs-identifier hs-var">logLevel</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">forall r (m :: Type -&gt; Type) a. MonadReader r m =&gt; (r -&gt; a) -&gt; m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/mtl-2.2.2/src/Control.Monad.Reader.Class.html#asks"><span class="hs-identifier hs-var">asks</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">forall k (is :: IxList) s a.
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///nix/store/94ab8p48g5ga04p8jv817kgpbgadmcwd-optics-core-0.4.1-doc/share/doc/optics-core-0.4.1/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. IsLabel &quot;logLevel&quot; a =&gt; a
+</span><span class="">#logLevel</span></span><span> </span><span class="annot"><span class="annottext">forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#."><span class="hs-operator hs-var">.</span></a></span><span> </span><span class="annot"><span class="annottext">forall env. HasLogEnv env =&gt; env -&gt; LogEnv
+</span><a href="Navi.Env.Core.html#getLogEnv"><span class="hs-identifier hs-var">getLogEnv</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-107"></span><span>    </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#when"><span class="hs-identifier hs-var">when</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">LogLevel
+</span><a href="#local-6989586621679312398"><span class="hs-identifier hs-var">logLevel</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Classes.html#%3C%3D"><span class="hs-operator hs-var">&lt;=</span></a></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="#local-6989586621679312401"><span class="hs-identifier hs-var">lvl</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-108"></span><span>      </span><span id="local-6989586621679312393"><span class="annot"><span class="annottext">LogStr
+</span><a href="#local-6989586621679312393"><span class="hs-identifier hs-var">formatted</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) msg.
+(HasCallStack, MonadLoggerNamespace m, MonadTime m,
+ ToLogStr msg) =&gt;
+LogFormatter -&gt; LogLevel -&gt; msg -&gt; m LogStr
+</span><span class="hs-identifier hs-var">formatLog</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Loc -&gt; LogFormatter
+</span><span class="hs-identifier hs-var">defaultLogFormatter</span></span><span> </span><span class="annot"><span class="annottext">Loc
+</span><a href="#local-6989586621679312403"><span class="hs-identifier hs-var">loc</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="#local-6989586621679312401"><span class="hs-identifier hs-var">lvl</span></a></span><span> </span><span class="annot"><span class="annottext">msg
+</span><a href="#local-6989586621679312400"><span class="hs-identifier hs-var">msg</span></a></span><span>
+</span><span id="line-109"></span><span>      </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a.
+(HasCallStack, MonadSTM m) =&gt;
+TBQueue a -&gt; a -&gt; m ()
+</span><span class="hs-identifier hs-var">writeTBQueueM</span></span><span> </span><span class="annot"><span class="annottext">TBQueue LogStr
+</span><a href="#local-6989586621679312399"><span class="hs-identifier hs-var">logQueue</span></a></span><span> </span><span class="annot"><span class="annottext">LogStr
+</span><a href="#local-6989586621679312393"><span class="hs-identifier hs-var">formatted</span></a></span><span>
+</span><span id="line-110"></span><span>
+</span><span id="line-111"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-112"></span><span>  </span><span id="local-6989586621679313296"><span class="hs-special">(</span><span> </span><span class="annot"><a href="Navi.Env.Core.html#HasLogEnv"><span class="hs-identifier hs-type">HasLogEnv</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679313296"><span class="hs-identifier hs-type">env</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-113"></span><span>    </span><span class="annot"><a href="Navi.Env.Core.html#HasLogQueue"><span class="hs-identifier hs-type">HasLogQueue</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679313296"><span class="hs-identifier hs-type">env</span></a></span><span>
+</span><span id="line-114"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-115"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">MonadLoggerNamespace</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.NaviT.html#NaviT"><span class="hs-identifier hs-type">NaviT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679313296"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-116"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-117"></span><span>  </span><span id="local-6989586621679312372"><span class="annot"><span class="annottext">getNamespace :: HasCallStack =&gt; NaviT env IO Namespace
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">getNamespace</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall r (m :: Type -&gt; Type) a. MonadReader r m =&gt; (r -&gt; a) -&gt; m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/mtl-2.2.2/src/Control.Monad.Reader.Class.html#asks"><span class="hs-identifier hs-var">asks</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">forall k (is :: IxList) s a.
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///nix/store/94ab8p48g5ga04p8jv817kgpbgadmcwd-optics-core-0.4.1-doc/share/doc/optics-core-0.4.1/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. IsLabel &quot;logNamespace&quot; a =&gt; a
+</span><span class="">#logNamespace</span></span><span> </span><span class="annot"><span class="annottext">forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#."><span class="hs-operator hs-var">.</span></a></span><span> </span><span class="annot"><span class="annottext">forall env. HasLogEnv env =&gt; env -&gt; LogEnv
+</span><a href="Navi.Env.Core.html#getLogEnv"><span class="hs-identifier hs-var">getLogEnv</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-118"></span><span>  </span><span id="local-6989586621679312358"><span class="annot"><span class="annottext">localNamespace :: forall a.
+HasCallStack =&gt;
+(Namespace -&gt; Namespace) -&gt; NaviT env IO a -&gt; NaviT env IO a
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">localNamespace</span></span></span><span> </span><span id="local-6989586621679312356"><span class="annot"><span class="annottext">Namespace -&gt; Namespace
+</span><a href="#local-6989586621679312356"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall r (m :: Type -&gt; Type) a.
+MonadReader r m =&gt;
+(r -&gt; r) -&gt; m a -&gt; m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/mtl-2.2.2/src/Control.Monad.Reader.Class.html#local"><span class="hs-identifier hs-var">local</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">forall env. HasLogEnv env =&gt; (LogEnv -&gt; LogEnv) -&gt; env -&gt; env
+</span><a href="Navi.Env.Core.html#localLogEnv"><span class="hs-identifier hs-var">localLogEnv</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">forall k (is :: IxList) s t a b.
+Is k A_Setter =&gt;
+Optic k is s t a b -&gt; (a -&gt; b) -&gt; s -&gt; t
+</span><a href="file:///nix/store/94ab8p48g5ga04p8jv817kgpbgadmcwd-optics-core-0.4.1-doc/share/doc/optics-core-0.4.1/html/src/Optics.Setter.html#over%27"><span class="hs-identifier hs-var">over'</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. IsLabel &quot;logNamespace&quot; a =&gt; a
+</span><span class="">#logNamespace</span></span><span> </span><span class="annot"><span class="annottext">Namespace -&gt; Namespace
+</span><a href="#local-6989586621679312356"><span class="hs-identifier hs-var">f</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-119"></span><span>
+</span><span id="line-120"></span><span class="hs-comment">-- | Runs 'NaviT'.</span><span>
+</span><span id="line-121"></span><span id="local-6989586621679313216"><span id="local-6989586621679313217"><span id="local-6989586621679313218"><span class="annot"><a href="Navi.NaviT.html#runNaviT"><span class="hs-identifier hs-type">runNaviT</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Navi.NaviT.html#NaviT"><span class="hs-identifier hs-type">NaviT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679313218"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679313217"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679313216"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679313218"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679313217"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679313216"><span class="hs-identifier hs-type">a</span></a></span></span></span></span><span>
+</span><span id="line-122"></span><span id="runNaviT"><span class="annot"><span class="annottext">runNaviT :: forall env (m :: Type -&gt; Type) a. NaviT env m a -&gt; env -&gt; m a
+</span><a href="Navi.NaviT.html#runNaviT"><span class="hs-identifier hs-var hs-var">runNaviT</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.NaviT.html#MkNaviT"><span class="hs-identifier hs-type">MkNaviT</span></a></span><span> </span><span id="local-6989586621679312352"><span class="annot"><span class="annottext">ReaderT env m a
+</span><a href="#local-6989586621679312352"><span class="hs-identifier hs-var">rdr</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall r (m :: Type -&gt; Type) a. ReaderT r m a -&gt; r -&gt; m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/transformers-0.5.6.2/src/Control.Monad.Trans.Reader.html#runReaderT"><span class="hs-identifier hs-var">runReaderT</span></a></span><span> </span><span class="annot"><span class="annottext">ReaderT env m a
+</span><a href="#local-6989586621679312352"><span class="hs-identifier hs-var">rdr</span></a></span><span>
+</span><span id="line-123"></span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Navi.NaviT.html#runNaviT"><span class="hs-pragma hs-type">runNaviT</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-124"></span></pre></body></html>

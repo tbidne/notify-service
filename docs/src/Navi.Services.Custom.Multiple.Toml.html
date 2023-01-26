@@ -1,0 +1,155 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE TemplateHaskell #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-3"></span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- | This module provides toml configuration for the custom multiple service.</span><span>
+</span><span id="line-5"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Navi.Services.Custom.Multiple.Toml</span><span>
+</span><span id="line-6"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Navi.Services.Custom.Multiple.Toml.html#MultipleToml"><span class="hs-identifier">MultipleToml</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Navi.Services.Custom.Multiple.Toml.html#TriggerNoteToml"><span class="hs-identifier">TriggerNoteToml</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-10"></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Data.NaviNote.html"><span class="hs-identifier">Navi.Data.NaviNote</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Data.NaviNote.html#NaviNote"><span class="hs-identifier">NaviNote</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Data.PollInterval.html"><span class="hs-identifier">Navi.Data.PollInterval</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Data.PollInterval.html#PollInterval"><span class="hs-identifier">PollInterval</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Navi.Data.PollInterval.html#pollIntervalOptDecoder"><span class="hs-identifier">pollIntervalOptDecoder</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Event.Toml.html"><span class="hs-identifier">Navi.Event.Toml</span></a></span><span>
+</span><span id="line-14"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Navi.Event.Toml.html#ErrorNoteToml"><span class="hs-identifier">ErrorNoteToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><a href="Navi.Event.Toml.html#RepeatEventToml"><span class="hs-identifier">RepeatEventToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><a href="Navi.Event.Toml.html#errorNoteOptDecoder"><span class="hs-identifier">errorNoteOptDecoder</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>    </span><span class="annot"><a href="Navi.Event.Toml.html#repeatEventOptDecoder"><span class="hs-identifier">repeatEventOptDecoder</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Prelude.html"><span class="hs-identifier">Navi.Prelude</span></a></span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Utils.html"><span class="hs-identifier">Navi.Utils</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Utils.html#commandDecoder"><span class="hs-identifier">commandDecoder</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Pythia.Data.Command</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Command</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span>
+</span><span id="line-23"></span><span class="hs-comment">-- | TOML for alerts.</span><span>
+</span><span id="line-24"></span><span class="hs-keyword">data</span><span> </span><span id="TriggerNoteToml"><span class="annot"><a href="Navi.Services.Custom.Multiple.Toml.html#TriggerNoteToml"><span class="hs-identifier hs-var">TriggerNoteToml</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkTriggerNoteToml"><span class="annot"><a href="Navi.Services.Custom.Multiple.Toml.html#MkTriggerNoteToml"><span class="hs-identifier hs-var">MkTriggerNoteToml</span></a></span></span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="hs-comment">-- | The text that triggers an alert.</span><span>
+</span><span id="line-26"></span><span>    </span><span id="%24sel%3Atrigger%3AMkTriggerNoteToml"><span class="annot"><span class="annottext">TriggerNoteToml -&gt; Text
+</span><a href="Navi.Services.Custom.Multiple.Toml.html#%24sel%3Atrigger%3AMkTriggerNoteToml"><span class="hs-identifier hs-var hs-var">trigger</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Internal.html#Text"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>    </span><span class="hs-comment">-- | The notification to send when triggered.</span><span>
+</span><span id="line-28"></span><span>    </span><span id="%24sel%3Anote%3AMkTriggerNoteToml"><span class="annot"><span class="annottext">TriggerNoteToml -&gt; NaviNote
+</span><a href="Navi.Services.Custom.Multiple.Toml.html#%24sel%3Anote%3AMkTriggerNoteToml"><span class="hs-identifier hs-var hs-var">note</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Navi.Data.NaviNote.html#NaviNote"><span class="hs-identifier hs-type">NaviNote</span></a></span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-30"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679308213"><span id="local-6989586621679308219"><span class="annot"><span class="annottext">TriggerNoteToml -&gt; TriggerNoteToml -&gt; Bool
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: TriggerNoteToml -&gt; TriggerNoteToml -&gt; Bool
+$c/= :: TriggerNoteToml -&gt; TriggerNoteToml -&gt; Bool
+== :: TriggerNoteToml -&gt; TriggerNoteToml -&gt; Bool
+$c== :: TriggerNoteToml -&gt; TriggerNoteToml -&gt; Bool
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Classes.html#Eq"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></a></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679308200"><span id="local-6989586621679308202"><span id="local-6989586621679308210"><span class="annot"><span class="annottext">Int -&gt; TriggerNoteToml -&gt; ShowS
+[TriggerNoteToml] -&gt; ShowS
+TriggerNoteToml -&gt; String
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [TriggerNoteToml] -&gt; ShowS
+$cshowList :: [TriggerNoteToml] -&gt; ShowS
+show :: TriggerNoteToml -&gt; String
+$cshow :: TriggerNoteToml -&gt; String
+showsPrec :: Int -&gt; TriggerNoteToml -&gt; ShowS
+$cshowsPrec :: Int -&gt; TriggerNoteToml -&gt; ShowS
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Show.html#Show"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></a></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span id="local-6989586621679308189"><span id="local-6989586621679308194"><span id="local-6989586621679308312"><span id="local-6989586621679308313"><span id="local-6989586621679308314"><span id="local-6989586621679308315"><span id="local-6989586621679308316"><span id="local-6989586621679308317"><span class="hs-identifier">makeFieldLabelsNoPrefix</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">TriggerNoteToml</span></span></span></span></span></span></span></span></span><span>
+</span><span id="line-33"></span><span>
+</span><span id="line-34"></span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-35"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Navi.Services.Custom.Multiple.Toml.html#TriggerNoteToml"><span class="hs-identifier hs-type">TriggerNoteToml</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-36"></span><span>  </span><span id="local-6989586621679308149"><span class="annot"><span class="annottext">tomlDecoder :: Decoder TriggerNoteToml
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-37"></span><span>    </span><span class="annot"><span class="annottext">Text -&gt; NaviNote -&gt; TriggerNoteToml
+</span><a href="Navi.Services.Custom.Multiple.Toml.html#MkTriggerNoteToml"><span class="hs-identifier hs-var">MkTriggerNoteToml</span></a></span><span>
+</span><span id="line-38"></span><span>      </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Data.Functor.html#%3C%24%3E"><span class="hs-operator hs-var">&lt;$&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. DecodeTOML a =&gt; Text -&gt; Decoder a
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#getField"><span class="hs-identifier hs-var">getField</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;trigger&quot;</span></span><span>
+</span><span id="line-39"></span><span>      </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%3C%2A%3E"><span class="hs-operator hs-var">&lt;*&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. DecodeTOML a =&gt; Text -&gt; Decoder a
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#getField"><span class="hs-identifier hs-var">getField</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;note&quot;</span></span><span>
+</span><span id="line-40"></span><span>
+</span><span id="line-41"></span><span class="hs-comment">-- | TOML for the custom multiple service.</span><span>
+</span><span id="line-42"></span><span class="hs-keyword">data</span><span> </span><span id="MultipleToml"><span class="annot"><a href="Navi.Services.Custom.Multiple.Toml.html#MultipleToml"><span class="hs-identifier hs-var">MultipleToml</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkMultipleToml"><span class="annot"><a href="Navi.Services.Custom.Multiple.Toml.html#MkMultipleToml"><span class="hs-identifier hs-var">MkMultipleToml</span></a></span></span><span>
+</span><span id="line-43"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="hs-comment">-- | The command to run.</span><span>
+</span><span id="line-44"></span><span>    </span><span id="%24sel%3Acommand%3AMkMultipleToml"><span class="annot"><span class="annottext">MultipleToml -&gt; Command
+</span><a href="Navi.Services.Custom.Multiple.Toml.html#%24sel%3Acommand%3AMkMultipleToml"><span class="hs-identifier hs-var hs-var">command</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Command</span></span><span class="hs-special">,</span><span>
+</span><span id="line-45"></span><span>    </span><span class="hs-comment">-- | An optional name to be used with logging.</span><span>
+</span><span id="line-46"></span><span>    </span><span id="%24sel%3Aname%3AMkMultipleToml"><span class="annot"><span class="annottext">MultipleToml -&gt; Maybe Text
+</span><a href="Navi.Services.Custom.Multiple.Toml.html#%24sel%3Aname%3AMkMultipleToml"><span class="hs-identifier hs-var hs-var">name</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Internal.html#Text"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-47"></span><span>    </span><span class="hs-comment">-- | The alert triggers.</span><span>
+</span><span id="line-48"></span><span>    </span><span id="%24sel%3AtriggerNotes%3AMkMultipleToml"><span class="annot"><span class="annottext">MultipleToml -&gt; NonEmpty TriggerNoteToml
+</span><a href="Navi.Services.Custom.Multiple.Toml.html#%24sel%3AtriggerNotes%3AMkMultipleToml"><span class="hs-identifier hs-var hs-var">triggerNotes</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#NonEmpty"><span class="hs-identifier hs-type">NonEmpty</span></a></span><span> </span><span class="annot"><a href="Navi.Services.Custom.Multiple.Toml.html#TriggerNoteToml"><span class="hs-identifier hs-type">TriggerNoteToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-49"></span><span>    </span><span class="hs-comment">-- | The poll interval.</span><span>
+</span><span id="line-50"></span><span>    </span><span id="%24sel%3ApollInterval%3AMkMultipleToml"><span class="annot"><span class="annottext">MultipleToml -&gt; Maybe PollInterval
+</span><a href="Navi.Services.Custom.Multiple.Toml.html#%24sel%3ApollInterval%3AMkMultipleToml"><span class="hs-identifier hs-var hs-var">pollInterval</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="Navi.Data.PollInterval.html#PollInterval"><span class="hs-identifier hs-type">PollInterval</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-51"></span><span>    </span><span class="hs-comment">-- | Determines how we treat repeat alerts.</span><span>
+</span><span id="line-52"></span><span>    </span><span id="%24sel%3ArepeatEventCfg%3AMkMultipleToml"><span class="annot"><span class="annottext">MultipleToml -&gt; Maybe RepeatEventToml
+</span><a href="Navi.Services.Custom.Multiple.Toml.html#%24sel%3ArepeatEventCfg%3AMkMultipleToml"><span class="hs-identifier hs-var hs-var">repeatEventCfg</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="Navi.Event.Toml.html#RepeatEventToml"><span class="hs-identifier hs-type">RepeatEventToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-53"></span><span>    </span><span class="hs-comment">-- | Determines how we handle errors.</span><span>
+</span><span id="line-54"></span><span>    </span><span id="%24sel%3AerrEventCfg%3AMkMultipleToml"><span class="annot"><span class="annottext">MultipleToml -&gt; Maybe ErrorNoteToml
+</span><a href="Navi.Services.Custom.Multiple.Toml.html#%24sel%3AerrEventCfg%3AMkMultipleToml"><span class="hs-identifier hs-var hs-var">errEventCfg</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="Navi.Event.Toml.html#ErrorNoteToml"><span class="hs-identifier hs-type">ErrorNoteToml</span></a></span><span>
+</span><span id="line-55"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-56"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679308121"><span id="local-6989586621679308137"><span class="annot"><span class="annottext">MultipleToml -&gt; MultipleToml -&gt; Bool
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: MultipleToml -&gt; MultipleToml -&gt; Bool
+$c/= :: MultipleToml -&gt; MultipleToml -&gt; Bool
+== :: MultipleToml -&gt; MultipleToml -&gt; Bool
+$c== :: MultipleToml -&gt; MultipleToml -&gt; Bool
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Classes.html#Eq"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></a></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679308097"><span id="local-6989586621679308099"><span id="local-6989586621679308116"><span class="annot"><span class="annottext">Int -&gt; MultipleToml -&gt; ShowS
+[MultipleToml] -&gt; ShowS
+MultipleToml -&gt; String
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [MultipleToml] -&gt; ShowS
+$cshowList :: [MultipleToml] -&gt; ShowS
+show :: MultipleToml -&gt; String
+$cshow :: MultipleToml -&gt; String
+showsPrec :: Int -&gt; MultipleToml -&gt; ShowS
+$cshowsPrec :: Int -&gt; MultipleToml -&gt; ShowS
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Show.html#Show"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></a></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-57"></span><span>
+</span><span id="line-58"></span><span id="local-6989586621679308064"><span id="local-6989586621679308069"><span id="local-6989586621679308074"><span id="local-6989586621679308079"><span id="local-6989586621679308084"><span id="local-6989586621679308089"><span id="local-6989586621679308247"><span id="local-6989586621679308248"><span id="local-6989586621679308249"><span id="local-6989586621679308250"><span id="local-6989586621679308251"><span id="local-6989586621679308252"><span id="local-6989586621679308253"><span id="local-6989586621679308254"><span id="local-6989586621679308255"><span id="local-6989586621679308256"><span id="local-6989586621679308257"><span id="local-6989586621679308258"><span id="local-6989586621679308259"><span id="local-6989586621679308260"><span id="local-6989586621679308261"><span id="local-6989586621679308262"><span id="local-6989586621679308263"><span id="local-6989586621679308264"><span class="hs-identifier">makeFieldLabelsNoPrefix</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">MultipleToml</span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span><span>
+</span><span id="line-59"></span><span>
+</span><span id="line-60"></span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-61"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Navi.Services.Custom.Multiple.Toml.html#MultipleToml"><span class="hs-identifier hs-type">MultipleToml</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-62"></span><span>  </span><span id="local-6989586621679307959"><span class="annot"><span class="annottext">tomlDecoder :: Decoder MultipleToml
+</span><a href="#local-6989586621679307959"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-63"></span><span>    </span><span class="annot"><span class="annottext">Command
+-&gt; Maybe Text
+-&gt; NonEmpty TriggerNoteToml
+-&gt; Maybe PollInterval
+-&gt; Maybe RepeatEventToml
+-&gt; Maybe ErrorNoteToml
+-&gt; MultipleToml
+</span><a href="Navi.Services.Custom.Multiple.Toml.html#MkMultipleToml"><span class="hs-identifier hs-var">MkMultipleToml</span></a></span><span>
+</span><span id="line-64"></span><span>      </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Data.Functor.html#%3C%24%3E"><span class="hs-operator hs-var">&lt;$&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder Command
+</span><a href="Navi.Utils.html#commandDecoder"><span class="hs-identifier hs-var">commandDecoder</span></a></span><span>
+</span><span id="line-65"></span><span>      </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%3C%2A%3E"><span class="hs-operator hs-var">&lt;*&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. DecodeTOML a =&gt; Text -&gt; Decoder (Maybe a)
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#getFieldOpt"><span class="hs-identifier hs-var">getFieldOpt</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;name&quot;</span></span><span>
+</span><span id="line-66"></span><span>      </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%3C%2A%3E"><span class="hs-operator hs-var">&lt;*&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. Decoder a -&gt; Text -&gt; Decoder a
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#getFieldWith"><span class="hs-identifier hs-var">getFieldWith</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;trigger-note&quot;</span></span><span>
+</span><span id="line-67"></span><span>      </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%3C%2A%3E"><span class="hs-operator hs-var">&lt;*&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (Maybe PollInterval)
+</span><a href="Navi.Data.PollInterval.html#pollIntervalOptDecoder"><span class="hs-identifier hs-var">pollIntervalOptDecoder</span></a></span><span>
+</span><span id="line-68"></span><span>      </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%3C%2A%3E"><span class="hs-operator hs-var">&lt;*&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (Maybe RepeatEventToml)
+</span><a href="Navi.Event.Toml.html#repeatEventOptDecoder"><span class="hs-identifier hs-var">repeatEventOptDecoder</span></a></span><span>
+</span><span id="line-69"></span><span>      </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%3C%2A%3E"><span class="hs-operator hs-var">&lt;*&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (Maybe ErrorNoteToml)
+</span><a href="Navi.Event.Toml.html#errorNoteOptDecoder"><span class="hs-identifier hs-var">errorNoteOptDecoder</span></a></span><span>
+</span><span id="line-70"></span></pre></body></html>

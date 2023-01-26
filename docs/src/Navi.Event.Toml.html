@@ -1,0 +1,237 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE TemplateHaskell #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-3"></span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- | This modules provides toml configuration related to events.</span><span>
+</span><span id="line-5"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Navi.Event.Toml</span><span>
+</span><span id="line-6"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Navi.Event.Toml.html#RepeatEventToml"><span class="hs-identifier">RepeatEventToml</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Navi.Event.Toml.html#_NoRepeatsToml"><span class="hs-identifier">_NoRepeatsToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><a href="Navi.Event.Toml.html#_AllowRepeatsToml"><span class="hs-identifier">_AllowRepeatsToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="Navi.Event.Toml.html#repeatEventOptDecoder"><span class="hs-identifier">repeatEventOptDecoder</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="Navi.Event.Toml.html#repeatEventTomlToVal"><span class="hs-identifier">repeatEventTomlToVal</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><a href="Navi.Event.Toml.html#mRepeatEventTomlToVal"><span class="hs-identifier">mRepeatEventTomlToVal</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><a href="Navi.Event.Toml.html#ErrorNoteToml"><span class="hs-identifier">ErrorNoteToml</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>    </span><span class="annot"><a href="Navi.Event.Toml.html#_NoErrNoteToml"><span class="hs-identifier">_NoErrNoteToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>    </span><span class="annot"><a href="Navi.Event.Toml.html#_ErrNoteAllowRepeatsToml"><span class="hs-identifier">_ErrNoteAllowRepeatsToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><a href="Navi.Event.Toml.html#_ErrNoteNoRepeatsToml"><span class="hs-identifier">_ErrNoteNoRepeatsToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><a href="Navi.Event.Toml.html#errorNoteOptDecoder"><span class="hs-identifier">errorNoteOptDecoder</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>    </span><span class="annot"><a href="Navi.Event.Toml.html#errorNoteTomlToVal"><span class="hs-identifier">errorNoteTomlToVal</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>    </span><span class="annot"><a href="Navi.Event.Toml.html#mErrorNoteTomlToVal"><span class="hs-identifier">mErrorNoteTomlToVal</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Event.Types.html"><span class="hs-identifier">Navi.Event.Types</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Event.Types.html#ErrorNote"><span class="hs-identifier">ErrorNote</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Navi.Event.Types.html#RepeatEvent"><span class="hs-identifier">RepeatEvent</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Prelude.html"><span class="hs-identifier">Navi.Prelude</span></a></span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-comment">-- | TOML for 'RepeatEvent'.</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">data</span><span> </span><span id="RepeatEventToml"><span class="annot"><a href="Navi.Event.Toml.html#RepeatEventToml"><span class="hs-identifier hs-var">RepeatEventToml</span></a></span></span><span>
+</span><span id="line-27"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="NoRepeatsToml"><span class="annot"><a href="Navi.Event.Toml.html#NoRepeatsToml"><span class="hs-identifier hs-var">NoRepeatsToml</span></a></span></span><span>
+</span><span id="line-28"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="AllowRepeatsToml"><span class="annot"><a href="Navi.Event.Toml.html#AllowRepeatsToml"><span class="hs-identifier hs-var">AllowRepeatsToml</span></a></span></span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679306776"><span id="local-6989586621679306778"><span class="annot"><span class="annottext">RepeatEventToml -&gt; RepeatEventToml -&gt; Bool
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: RepeatEventToml -&gt; RepeatEventToml -&gt; Bool
+$c/= :: RepeatEventToml -&gt; RepeatEventToml -&gt; Bool
+== :: RepeatEventToml -&gt; RepeatEventToml -&gt; Bool
+$c== :: RepeatEventToml -&gt; RepeatEventToml -&gt; Bool
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Classes.html#Eq"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></a></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679306769"><span id="local-6989586621679306771"><span id="local-6989586621679306773"><span class="annot"><span class="annottext">Int -&gt; RepeatEventToml -&gt; ShowS
+[RepeatEventToml] -&gt; ShowS
+RepeatEventToml -&gt; String
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [RepeatEventToml] -&gt; ShowS
+$cshowList :: [RepeatEventToml] -&gt; ShowS
+show :: RepeatEventToml -&gt; String
+$cshow :: RepeatEventToml -&gt; String
+showsPrec :: Int -&gt; RepeatEventToml -&gt; ShowS
+$cshowsPrec :: Int -&gt; RepeatEventToml -&gt; ShowS
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Show.html#Show"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></a></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span id="_AllowRepeatsToml"><span id="_NoRepeatsToml"><span class="hs-identifier">makePrisms</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">RepeatEventToml</span></span></span><span>
+</span><span id="line-32"></span><span>
+</span><span id="line-33"></span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-34"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Navi.Event.Toml.html#RepeatEventToml"><span class="hs-identifier hs-type">RepeatEventToml</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-35"></span><span>  </span><span id="local-6989586621679306758"><span class="annot"><span class="annottext">tomlDecoder :: Decoder RepeatEventToml
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-36"></span><span>    </span><span class="annot"><span class="annottext">forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b. Functor f =&gt; f a -&gt; (a -&gt; b) -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Data.Functor.html#%3C%26%3E"><span class="hs-operator hs-var">&lt;&amp;&gt;</span></a></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679306755"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679306755"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-37"></span><span>      </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679306755"><span class="hs-identifier hs-var">b</span></a></span><span>
+</span><span id="line-38"></span><span>        </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">RepeatEventToml
+</span><a href="Navi.Event.Toml.html#AllowRepeatsToml"><span class="hs-identifier hs-var">AllowRepeatsToml</span></a></span><span>
+</span><span id="line-39"></span><span>        </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">RepeatEventToml
+</span><a href="Navi.Event.Toml.html#NoRepeatsToml"><span class="hs-identifier hs-var">NoRepeatsToml</span></a></span><span>
+</span><span id="line-40"></span><span>
+</span><span id="line-41"></span><span class="hs-comment">-- | TOML decoder for optional 'RepeatEventToml' with field name</span><span>
+</span><span id="line-42"></span><span class="hs-comment">-- &quot;repeat-events&quot;.</span><span>
+</span><span id="line-43"></span><span class="hs-comment">--</span><span>
+</span><span id="line-44"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-45"></span><span class="annot"><a href="Navi.Event.Toml.html#repeatEventOptDecoder"><span class="hs-identifier hs-type">repeatEventOptDecoder</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#Decoder"><span class="hs-identifier hs-type">Decoder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="Navi.Event.Toml.html#RepeatEventToml"><span class="hs-identifier hs-type">RepeatEventToml</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-46"></span><span id="repeatEventOptDecoder"><span class="annot"><span class="annottext">repeatEventOptDecoder :: Decoder (Maybe RepeatEventToml)
+</span><a href="Navi.Event.Toml.html#repeatEventOptDecoder"><span class="hs-identifier hs-var hs-var">repeatEventOptDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall a. Decoder a -&gt; Text -&gt; Decoder (Maybe a)
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#getFieldOptWith"><span class="hs-identifier hs-var">getFieldOptWith</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;repeat-events&quot;</span></span><span>
+</span><span id="line-47"></span><span>
+</span><span id="line-48"></span><span class="hs-comment">-- | Constructs a mutable 'RepeatEvent' from 'RepeatEventToml'.</span><span>
+</span><span id="line-49"></span><span id="local-6989586621679306843"><span id="local-6989586621679306845"><span class="annot"><a href="Navi.Event.Toml.html#repeatEventTomlToVal"><span class="hs-identifier hs-type">repeatEventTomlToVal</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679306845"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Navi.Event.Toml.html#RepeatEventToml"><span class="hs-identifier hs-type">RepeatEventToml</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679306845"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Event.Types.html#RepeatEvent"><span class="hs-identifier hs-type">RepeatEvent</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306843"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-50"></span><span id="repeatEventTomlToVal"><span class="annot"><span class="annottext">repeatEventTomlToVal :: forall (m :: Type -&gt; Type) a.
+MonadIORef m =&gt;
+RepeatEventToml -&gt; m (RepeatEvent a)
+</span><a href="Navi.Event.Toml.html#repeatEventTomlToVal"><span class="hs-identifier hs-var hs-var">repeatEventTomlToVal</span></a></span></span><span> </span><span class="annot"><span class="annottext">RepeatEventToml
+</span><a href="Navi.Event.Toml.html#AllowRepeatsToml"><span class="hs-identifier hs-var">AllowRepeatsToml</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#pure"><span class="hs-identifier hs-var">pure</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. RepeatEvent a
+</span><a href="Navi.Event.Types.html#AllowRepeats"><span class="hs-identifier hs-var">AllowRepeats</span></a></span><span>
+</span><span id="line-51"></span><span class="annot"><a href="Navi.Event.Toml.html#repeatEventTomlToVal"><span class="hs-identifier hs-var">repeatEventTomlToVal</span></a></span><span> </span><span class="annot"><span class="annottext">RepeatEventToml
+</span><a href="Navi.Event.Toml.html#NoRepeatsToml"><span class="hs-identifier hs-var">NoRepeatsToml</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall a. IORef (Maybe a) -&gt; RepeatEvent a
+</span><a href="Navi.Event.Types.html#NoRepeats"><span class="hs-identifier hs-var">NoRepeats</span></a></span><span> </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Data.Functor.html#%3C%24%3E"><span class="hs-operator hs-var">&lt;$&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+a -&gt; m (IORef a)
+</span><span class="hs-identifier hs-var">newIORef</span></span><span> </span><span class="annot"><span class="annottext">forall a. Maybe a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Nothing"><span class="hs-identifier hs-var">Nothing</span></a></span><span>
+</span><span id="line-52"></span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Navi.Event.Toml.html#repeatEventTomlToVal"><span class="hs-pragma hs-type">repeatEventTomlToVal</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span class="hs-comment">-- | Constructs a mutable 'RepeatEvent' from 'RepeatEventToml'. If none is</span><span>
+</span><span id="line-55"></span><span class="hs-comment">-- provided, defaults to 'NoRepeatsToml', i.e., no repeats.</span><span>
+</span><span id="line-56"></span><span id="local-6989586621679306826"><span id="local-6989586621679306827"><span class="annot"><a href="Navi.Event.Toml.html#mRepeatEventTomlToVal"><span class="hs-identifier hs-type">mRepeatEventTomlToVal</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679306827"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="Navi.Event.Toml.html#RepeatEventToml"><span class="hs-identifier hs-type">RepeatEventToml</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679306827"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Event.Types.html#RepeatEvent"><span class="hs-identifier hs-type">RepeatEvent</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306826"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-57"></span><span id="mRepeatEventTomlToVal"><span class="annot"><span class="annottext">mRepeatEventTomlToVal :: forall (m :: Type -&gt; Type) a.
+MonadIORef m =&gt;
+Maybe RepeatEventToml -&gt; m (RepeatEvent a)
+</span><a href="Navi.Event.Toml.html#mRepeatEventTomlToVal"><span class="hs-identifier hs-var hs-var">mRepeatEventTomlToVal</span></a></span></span><span> </span><span class="annot"><span class="annottext">Maybe RepeatEventToml
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Nothing"><span class="hs-identifier hs-var">Nothing</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a.
+MonadIORef m =&gt;
+RepeatEventToml -&gt; m (RepeatEvent a)
+</span><a href="Navi.Event.Toml.html#repeatEventTomlToVal"><span class="hs-identifier hs-var">repeatEventTomlToVal</span></a></span><span> </span><span class="annot"><span class="annottext">RepeatEventToml
+</span><a href="Navi.Event.Toml.html#NoRepeatsToml"><span class="hs-identifier hs-var">NoRepeatsToml</span></a></span><span>
+</span><span id="line-58"></span><span class="annot"><a href="Navi.Event.Toml.html#mRepeatEventTomlToVal"><span class="hs-identifier hs-var">mRepeatEventTomlToVal</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Just"><span class="hs-identifier hs-type">Just</span></a></span><span> </span><span id="local-6989586621679306734"><span class="annot"><span class="annottext">RepeatEventToml
+</span><a href="#local-6989586621679306734"><span class="hs-identifier hs-var">t</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a.
+MonadIORef m =&gt;
+RepeatEventToml -&gt; m (RepeatEvent a)
+</span><a href="Navi.Event.Toml.html#repeatEventTomlToVal"><span class="hs-identifier hs-var">repeatEventTomlToVal</span></a></span><span> </span><span class="annot"><span class="annottext">RepeatEventToml
+</span><a href="#local-6989586621679306734"><span class="hs-identifier hs-var">t</span></a></span><span>
+</span><span id="line-59"></span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Navi.Event.Toml.html#mRepeatEventTomlToVal"><span class="hs-pragma hs-type">mRepeatEventTomlToVal</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-60"></span><span>
+</span><span id="line-61"></span><span class="hs-comment">-- | TOML for 'ErrorNote'.</span><span>
+</span><span id="line-62"></span><span class="hs-keyword">data</span><span> </span><span id="ErrorNoteToml"><span class="annot"><a href="Navi.Event.Toml.html#ErrorNoteToml"><span class="hs-identifier hs-var">ErrorNoteToml</span></a></span></span><span>
+</span><span id="line-63"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="NoErrNoteToml"><span class="annot"><a href="Navi.Event.Toml.html#NoErrNoteToml"><span class="hs-identifier hs-var">NoErrNoteToml</span></a></span></span><span>
+</span><span id="line-64"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="ErrNoteAllowRepeatsToml"><span class="annot"><a href="Navi.Event.Toml.html#ErrNoteAllowRepeatsToml"><span class="hs-identifier hs-var">ErrNoteAllowRepeatsToml</span></a></span></span><span>
+</span><span id="line-65"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="ErrNoteNoRepeatsToml"><span class="annot"><a href="Navi.Event.Toml.html#ErrNoteNoRepeatsToml"><span class="hs-identifier hs-var">ErrNoteNoRepeatsToml</span></a></span></span><span>
+</span><span id="line-66"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679306727"><span id="local-6989586621679306729"><span class="annot"><span class="annottext">ErrorNoteToml -&gt; ErrorNoteToml -&gt; Bool
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: ErrorNoteToml -&gt; ErrorNoteToml -&gt; Bool
+$c/= :: ErrorNoteToml -&gt; ErrorNoteToml -&gt; Bool
+== :: ErrorNoteToml -&gt; ErrorNoteToml -&gt; Bool
+$c== :: ErrorNoteToml -&gt; ErrorNoteToml -&gt; Bool
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Classes.html#Eq"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></a></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679306721"><span id="local-6989586621679306723"><span id="local-6989586621679306725"><span class="annot"><span class="annottext">Int -&gt; ErrorNoteToml -&gt; ShowS
+[ErrorNoteToml] -&gt; ShowS
+ErrorNoteToml -&gt; String
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [ErrorNoteToml] -&gt; ShowS
+$cshowList :: [ErrorNoteToml] -&gt; ShowS
+show :: ErrorNoteToml -&gt; String
+$cshow :: ErrorNoteToml -&gt; String
+showsPrec :: Int -&gt; ErrorNoteToml -&gt; ShowS
+$cshowsPrec :: Int -&gt; ErrorNoteToml -&gt; ShowS
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Show.html#Show"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></a></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-67"></span><span>
+</span><span id="line-68"></span><span id="_ErrNoteNoRepeatsToml"><span id="_ErrNoteAllowRepeatsToml"><span id="_NoErrNoteToml"><span class="hs-identifier">makePrisms</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">ErrorNoteToml</span></span></span></span><span>
+</span><span id="line-69"></span><span>
+</span><span id="line-70"></span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-71"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Navi.Event.Toml.html#ErrorNoteToml"><span class="hs-identifier hs-type">ErrorNoteToml</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-72"></span><span>  </span><span id="local-6989586621679306697"><span class="annot"><span class="annottext">tomlDecoder :: Decoder ErrorNoteToml
+</span><a href="#local-6989586621679306697"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-73"></span><span>    </span><span class="annot"><span class="annottext">forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span>
+</span><span id="line-74"></span><span>      </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%3E%3E%3D"><span class="hs-operator hs-var">&gt;&gt;=</span></a></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-75"></span><span>        </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;none&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#pure"><span class="hs-identifier hs-var">pure</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorNoteToml
+</span><a href="Navi.Event.Toml.html#NoErrNoteToml"><span class="hs-identifier hs-var">NoErrNoteToml</span></a></span><span>
+</span><span id="line-76"></span><span>        </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;repeats&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#pure"><span class="hs-identifier hs-var">pure</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorNoteToml
+</span><a href="Navi.Event.Toml.html#ErrNoteAllowRepeatsToml"><span class="hs-identifier hs-var">ErrNoteAllowRepeatsToml</span></a></span><span>
+</span><span id="line-77"></span><span>        </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;no-repeats&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#pure"><span class="hs-identifier hs-var">pure</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorNoteToml
+</span><a href="Navi.Event.Toml.html#ErrNoteNoRepeatsToml"><span class="hs-identifier hs-var">ErrNoteNoRepeatsToml</span></a></span><span>
+</span><span id="line-78"></span><span>        </span><span id="local-6989586621679306696"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679306696"><span class="hs-identifier hs-var">bad</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-79"></span><span>          </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a. MonadFail m =&gt; String -&gt; m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Control.Monad.Fail.html#fail"><span class="hs-identifier hs-var">fail</span></a></span><span> </span><span class="annot"><span class="annottext">forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span>
+</span><span id="line-80"></span><span>            </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Show.html#unpack"><span class="hs-identifier hs-var">unpack</span></a></span><span> </span><span class="annot"><span class="annottext">forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span>
+</span><span id="line-81"></span><span>              </span><span class="annot"><span class="annottext">[Text] -&gt; Text
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.html#concat"><span class="hs-identifier hs-var">concat</span></a></span><span>
+</span><span id="line-82"></span><span>                </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Unexpected error-events string: &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-83"></span><span>                  </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679306696"><span class="hs-identifier hs-var">bad</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-84"></span><span>                  </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;. Expected one of &lt;none | repeats | no-repeats&gt;.&quot;</span></span><span>
+</span><span id="line-85"></span><span>                </span><span class="hs-special">]</span><span>
+</span><span id="line-86"></span><span>
+</span><span id="line-87"></span><span class="hs-comment">-- | TOML decoder for optional 'ErrorNoteToml' with field name</span><span>
+</span><span id="line-88"></span><span class="hs-comment">-- &quot;error-events&quot;.</span><span>
+</span><span id="line-89"></span><span class="hs-comment">--</span><span>
+</span><span id="line-90"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-91"></span><span class="annot"><a href="Navi.Event.Toml.html#errorNoteOptDecoder"><span class="hs-identifier hs-type">errorNoteOptDecoder</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#Decoder"><span class="hs-identifier hs-type">Decoder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="Navi.Event.Toml.html#ErrorNoteToml"><span class="hs-identifier hs-type">ErrorNoteToml</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-92"></span><span id="errorNoteOptDecoder"><span class="annot"><span class="annottext">errorNoteOptDecoder :: Decoder (Maybe ErrorNoteToml)
+</span><a href="Navi.Event.Toml.html#errorNoteOptDecoder"><span class="hs-identifier hs-var hs-var">errorNoteOptDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall a. Decoder a -&gt; Text -&gt; Decoder (Maybe a)
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#getFieldOptWith"><span class="hs-identifier hs-var">getFieldOptWith</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;error-events&quot;</span></span><span>
+</span><span id="line-93"></span><span>
+</span><span id="line-94"></span><span class="hs-comment">-- | Constructs a mutable 'ErrorNote' from 'ErrorNoteToml'.</span><span>
+</span><span id="line-95"></span><span id="local-6989586621679306817"><span class="annot"><a href="Navi.Event.Toml.html#errorNoteTomlToVal"><span class="hs-identifier hs-type">errorNoteTomlToVal</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679306817"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Navi.Event.Toml.html#ErrorNoteToml"><span class="hs-identifier hs-type">ErrorNoteToml</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679306817"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Navi.Event.Types.html#ErrorNote"><span class="hs-identifier hs-type">ErrorNote</span></a></span></span><span>
+</span><span id="line-96"></span><span id="errorNoteTomlToVal"><span class="annot"><span class="annottext">errorNoteTomlToVal :: forall (m :: Type -&gt; Type).
+MonadIORef m =&gt;
+ErrorNoteToml -&gt; m ErrorNote
+</span><a href="Navi.Event.Toml.html#errorNoteTomlToVal"><span class="hs-identifier hs-var hs-var">errorNoteTomlToVal</span></a></span></span><span> </span><span class="annot"><span class="annottext">ErrorNoteToml
+</span><a href="Navi.Event.Toml.html#NoErrNoteToml"><span class="hs-identifier hs-var">NoErrNoteToml</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#pure"><span class="hs-identifier hs-var">pure</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorNote
+</span><a href="Navi.Event.Types.html#NoErrNote"><span class="hs-identifier hs-var">NoErrNote</span></a></span><span>
+</span><span id="line-97"></span><span class="annot"><a href="Navi.Event.Toml.html#errorNoteTomlToVal"><span class="hs-identifier hs-var">errorNoteTomlToVal</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorNoteToml
+</span><a href="Navi.Event.Toml.html#ErrNoteAllowRepeatsToml"><span class="hs-identifier hs-var">ErrNoteAllowRepeatsToml</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#pure"><span class="hs-identifier hs-var">pure</span></a></span><span> </span><span class="annot"><span class="annottext">forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">RepeatEvent () -&gt; ErrorNote
+</span><a href="Navi.Event.Types.html#AllowErrNote"><span class="hs-identifier hs-var">AllowErrNote</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. RepeatEvent a
+</span><a href="Navi.Event.Types.html#AllowRepeats"><span class="hs-identifier hs-var">AllowRepeats</span></a></span><span>
+</span><span id="line-98"></span><span class="annot"><a href="Navi.Event.Toml.html#errorNoteTomlToVal"><span class="hs-identifier hs-var">errorNoteTomlToVal</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorNoteToml
+</span><a href="Navi.Event.Toml.html#ErrNoteNoRepeatsToml"><span class="hs-identifier hs-var">ErrNoteNoRepeatsToml</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">RepeatEvent () -&gt; ErrorNote
+</span><a href="Navi.Event.Types.html#AllowErrNote"><span class="hs-identifier hs-var">AllowErrNote</span></a></span><span> </span><span class="annot"><span class="annottext">forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#."><span class="hs-operator hs-var">.</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. IORef (Maybe a) -&gt; RepeatEvent a
+</span><a href="Navi.Event.Types.html#NoRepeats"><span class="hs-identifier hs-var">NoRepeats</span></a></span><span> </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Data.Functor.html#%3C%24%3E"><span class="hs-operator hs-var">&lt;$&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+a -&gt; m (IORef a)
+</span><span class="hs-identifier hs-var">newIORef</span></span><span> </span><span class="annot"><span class="annottext">forall a. Maybe a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Nothing"><span class="hs-identifier hs-var">Nothing</span></a></span><span>
+</span><span id="line-99"></span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Navi.Event.Toml.html#errorNoteTomlToVal"><span class="hs-pragma hs-type">errorNoteTomlToVal</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-100"></span><span>
+</span><span id="line-101"></span><span class="hs-comment">-- | Constructs a mutable 'ErrorNote' from 'ErrorNoteToml'. If none is</span><span>
+</span><span id="line-102"></span><span class="hs-comment">-- provided, defaults to 'ErrNoteNoRepeatsToml', i.e., we /do/ send</span><span>
+</span><span id="line-103"></span><span class="hs-comment">-- notifications for errors, but we do not send repeats.</span><span>
+</span><span id="line-104"></span><span id="local-6989586621679306811"><span class="annot"><a href="Navi.Event.Toml.html#mErrorNoteTomlToVal"><span class="hs-identifier hs-type">mErrorNoteTomlToVal</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679306811"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="Navi.Event.Toml.html#ErrorNoteToml"><span class="hs-identifier hs-type">ErrorNoteToml</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679306811"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Navi.Event.Types.html#ErrorNote"><span class="hs-identifier hs-type">ErrorNote</span></a></span></span><span>
+</span><span id="line-105"></span><span id="mErrorNoteTomlToVal"><span class="annot"><span class="annottext">mErrorNoteTomlToVal :: forall (m :: Type -&gt; Type).
+MonadIORef m =&gt;
+Maybe ErrorNoteToml -&gt; m ErrorNote
+</span><a href="Navi.Event.Toml.html#mErrorNoteTomlToVal"><span class="hs-identifier hs-var hs-var">mErrorNoteTomlToVal</span></a></span></span><span> </span><span class="annot"><span class="annottext">Maybe ErrorNoteToml
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Nothing"><span class="hs-identifier hs-var">Nothing</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type).
+MonadIORef m =&gt;
+ErrorNoteToml -&gt; m ErrorNote
+</span><a href="Navi.Event.Toml.html#errorNoteTomlToVal"><span class="hs-identifier hs-var">errorNoteTomlToVal</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorNoteToml
+</span><a href="Navi.Event.Toml.html#ErrNoteNoRepeatsToml"><span class="hs-identifier hs-var">ErrNoteNoRepeatsToml</span></a></span><span>
+</span><span id="line-106"></span><span class="annot"><a href="Navi.Event.Toml.html#mErrorNoteTomlToVal"><span class="hs-identifier hs-var">mErrorNoteTomlToVal</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Just"><span class="hs-identifier hs-type">Just</span></a></span><span> </span><span id="local-6989586621679306677"><span class="annot"><span class="annottext">ErrorNoteToml
+</span><a href="#local-6989586621679306677"><span class="hs-identifier hs-var">t</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type).
+MonadIORef m =&gt;
+ErrorNoteToml -&gt; m ErrorNote
+</span><a href="Navi.Event.Toml.html#errorNoteTomlToVal"><span class="hs-identifier hs-var">errorNoteTomlToVal</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorNoteToml
+</span><a href="#local-6989586621679306677"><span class="hs-identifier hs-var">t</span></a></span><span>
+</span><span id="line-107"></span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Navi.Event.Toml.html#mErrorNoteTomlToVal"><span class="hs-pragma hs-type">mErrorNoteTomlToVal</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-108"></span></pre></body></html>

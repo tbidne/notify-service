@@ -1,0 +1,171 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | This module provides a service for multiple alerts.</span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Navi.Services.Custom.Multiple</span><span>
+</span><span id="line-3"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Navi.Services.Custom.Multiple.Toml.html#MultipleToml"><span class="hs-identifier">MultipleToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-4"></span><span>    </span><span class="annot"><a href="Navi.Services.Custom.Multiple.html#toEvent"><span class="hs-identifier">toEvent</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-6"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Data.List.NonEmpty.html"><span class="hs-identifier">Data.List.NonEmpty</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">NE</span></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/containers-0.6.5.1/src/Data.Map.Strict.html"><span class="hs-identifier">Data.Map.Strict</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Map</span></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.html"><span class="hs-identifier">Data.Text</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Data.NaviNote.html"><span class="hs-identifier">Navi.Data.NaviNote</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Data.NaviNote.html#NaviNote"><span class="hs-identifier">NaviNote</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Data.PollInterval.html"><span class="hs-identifier">Navi.Data.PollInterval</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Data.PollInterval.html#PollInterval"><span class="hs-identifier">PollInterval</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Event.Toml.html"><span class="hs-identifier">Navi.Event.Toml</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">EventToml</span></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Event.Types.html"><span class="hs-identifier">Navi.Event.Types</span></a></span><span>
+</span><span id="line-15"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Navi.Event.Types.html#AnyEvent"><span class="hs-identifier">AnyEvent</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><a href="Navi.Event.Types.html#ErrorNote"><span class="hs-identifier">ErrorNote</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>    </span><span class="annot"><a href="Navi.Event.Types.html#Event"><span class="hs-identifier">Event</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>    </span><span class="annot"><a href="Navi.Event.Types.html#RepeatEvent"><span class="hs-identifier">RepeatEvent</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Prelude.html"><span class="hs-identifier">Navi.Prelude</span></a></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Services.Custom.Multiple.Toml.html"><span class="hs-identifier">Navi.Services.Custom.Multiple.Toml</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Services.Custom.Multiple.Toml.html#MultipleToml"><span class="hs-identifier">MultipleToml</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Navi.Services.Custom.Multiple.Toml.html#TriggerNoteToml"><span class="hs-identifier">TriggerNoteToml</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Services.Types.html"><span class="hs-identifier">Navi.Services.Types</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Services.Types.html#ServiceType"><span class="hs-identifier">ServiceType</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Pythia.Data.Command</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Command</span></span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-comment">-- | Transforms toml configuration data into an 'AnyEvent'.</span><span>
+</span><span id="line-26"></span><span id="local-6989586621679308529"><span class="annot"><a href="Navi.Services.Custom.Multiple.html#toEvent"><span class="hs-identifier hs-type">toEvent</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadIORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679308529"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Navi.Services.Custom.Multiple.Toml.html#MultipleToml"><span class="hs-identifier hs-type">MultipleToml</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679308529"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Navi.Event.Types.html#AnyEvent"><span class="hs-identifier hs-type">AnyEvent</span></a></span></span><span>
+</span><span id="line-27"></span><span id="toEvent"><span class="annot"><span class="annottext">toEvent :: forall (m :: Type -&gt; Type).
+MonadIORef m =&gt;
+MultipleToml -&gt; m AnyEvent
+</span><a href="Navi.Services.Custom.Multiple.html#toEvent"><span class="hs-identifier hs-var hs-var">toEvent</span></a></span></span><span> </span><span id="local-6989586621679308377"><span class="annot"><span class="annottext">MultipleToml
+</span><a href="#local-6989586621679308377"><span class="hs-identifier hs-var">toml</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-28"></span><span>  </span><span id="local-6989586621679308376"><span class="annot"><span class="annottext">RepeatEvent Text
+</span><a href="#local-6989586621679308376"><span class="hs-identifier hs-var">repeatEvent</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a.
+MonadIORef m =&gt;
+Maybe RepeatEventToml -&gt; m (RepeatEvent a)
+</span><a href="Navi.Event.Toml.html#mRepeatEventTomlToVal"><span class="hs-identifier hs-var">EventToml.mRepeatEventTomlToVal</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">MultipleToml
+</span><a href="#local-6989586621679308377"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/94ab8p48g5ga04p8jv817kgpbgadmcwd-optics-core-0.4.1-doc/share/doc/optics-core-0.4.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. IsLabel &quot;repeatEventCfg&quot; a =&gt; a
+</span><span class="">#repeatEventCfg</span></span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span>  </span><span id="local-6989586621679308373"><span class="annot"><span class="annottext">ErrorNote
+</span><a href="#local-6989586621679308373"><span class="hs-identifier hs-var">errorNote</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type).
+MonadIORef m =&gt;
+Maybe ErrorNoteToml -&gt; m ErrorNote
+</span><a href="Navi.Event.Toml.html#mErrorNoteTomlToVal"><span class="hs-identifier hs-var">EventToml.mErrorNoteTomlToVal</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">MultipleToml
+</span><a href="#local-6989586621679308377"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/94ab8p48g5ga04p8jv817kgpbgadmcwd-optics-core-0.4.1-doc/share/doc/optics-core-0.4.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. IsLabel &quot;errEventCfg&quot; a =&gt; a
+</span><span class="">#errEventCfg</span></span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span>  </span><span class="hs-identifier">pure</span><span> </span><span class="hs-operator">$</span><span>
+</span><span id="line-31"></span><span>    </span><span class="annot"><span class="annottext">forall result. (Eq result, Show result) =&gt; Event result -&gt; AnyEvent
+</span><a href="Navi.Event.Types.html#MkAnyEvent"><span class="hs-identifier hs-var">MkAnyEvent</span></a></span><span> </span><span class="annot"><span class="annottext">forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span>
+</span><span id="line-32"></span><span>      </span><span class="annot"><span class="annottext">Maybe Text
+-&gt; Command
+-&gt; NonEmpty (Text, NaviNote)
+-&gt; PollInterval
+-&gt; RepeatEvent Text
+-&gt; ErrorNote
+-&gt; Event Text
+</span><a href="Navi.Services.Custom.Multiple.html#mkMultipleEvent"><span class="hs-identifier hs-var">mkMultipleEvent</span></a></span><span>
+</span><span id="line-33"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">MultipleToml
+</span><a href="#local-6989586621679308377"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/94ab8p48g5ga04p8jv817kgpbgadmcwd-optics-core-0.4.1-doc/share/doc/optics-core-0.4.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. IsLabel &quot;name&quot; a =&gt; a
+</span><span class="">#name</span></span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">MultipleToml
+</span><a href="#local-6989586621679308377"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/94ab8p48g5ga04p8jv817kgpbgadmcwd-optics-core-0.4.1-doc/share/doc/optics-core-0.4.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. IsLabel &quot;command&quot; a =&gt; a
+</span><span class="">#command</span></span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span>        </span><span class="annot"><span class="annottext">NonEmpty (Text, NaviNote)
+</span><a href="#local-6989586621679308369"><span class="hs-identifier hs-var">triggerNotePairs</span></a></span><span>
+</span><span id="line-36"></span><span>        </span><span class="annot"><span class="annottext">PollInterval
+</span><a href="#local-6989586621679308368"><span class="hs-identifier hs-var">pi</span></a></span><span>
+</span><span id="line-37"></span><span>        </span><span class="annot"><span class="annottext">RepeatEvent Text
+</span><a href="#local-6989586621679308376"><span class="hs-identifier hs-var">repeatEvent</span></a></span><span>
+</span><span id="line-38"></span><span>        </span><span class="annot"><span class="annottext">ErrorNote
+</span><a href="#local-6989586621679308373"><span class="hs-identifier hs-var">errorNote</span></a></span><span>
+</span><span id="line-39"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-40"></span><span>    </span><span id="local-6989586621679308369"><span class="annot"><span class="annottext">triggerNotePairs :: NonEmpty (Text, NaviNote)
+</span><a href="#local-6989586621679308369"><span class="hs-identifier hs-var hs-var">triggerNotePairs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#fmap"><span class="hs-identifier hs-var">fmap</span></a></span><span> </span><span class="annot"><span class="annottext">TriggerNoteToml -&gt; (Text, NaviNote)
+</span><a href="#local-6989586621679308367"><span class="hs-identifier hs-var">toPair</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">MultipleToml
+</span><a href="#local-6989586621679308377"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/94ab8p48g5ga04p8jv817kgpbgadmcwd-optics-core-0.4.1-doc/share/doc/optics-core-0.4.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. IsLabel &quot;triggerNotes&quot; a =&gt; a
+</span><span class="">#triggerNotes</span></span><span class="hs-special">)</span><span>
+</span><span id="line-41"></span><span>    </span><span id="local-6989586621679308367"><span class="annot"><span class="annottext">toPair :: TriggerNoteToml -&gt; (Text, NaviNote)
+</span><a href="#local-6989586621679308367"><span class="hs-identifier hs-var hs-var">toPair</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Services.Custom.Multiple.Toml.html#MkTriggerNoteToml"><span class="hs-identifier hs-type">MkTriggerNoteToml</span></a></span><span> </span><span id="local-6989586621679308365"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679308365"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679308364"><span class="annot"><span class="annottext">NaviNote
+</span><a href="#local-6989586621679308364"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.html#strip"><span class="hs-identifier hs-var">T.strip</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679308365"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">NaviNote
+</span><a href="#local-6989586621679308364"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-42"></span><span>    </span><span id="local-6989586621679308368"><span class="annot"><span class="annottext">pi :: PollInterval
+</span><a href="#local-6989586621679308368"><span class="hs-identifier hs-var hs-var">pi</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall a. a -&gt; Maybe a -&gt; a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Data.Maybe.html#fromMaybe"><span class="hs-identifier hs-var">fromMaybe</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Natural -&gt; PollInterval
+</span><a href="Navi.Data.PollInterval.html#MkPollInterval"><span class="hs-identifier hs-var">MkPollInterval</span></a></span><span> </span><span class="annot"><span class="annottext">Natural
+</span><span class="hs-number">30</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">MultipleToml
+</span><a href="#local-6989586621679308377"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/94ab8p48g5ga04p8jv817kgpbgadmcwd-optics-core-0.4.1-doc/share/doc/optics-core-0.4.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. IsLabel &quot;pollInterval&quot; a =&gt; a
+</span><span class="">#pollInterval</span></span><span class="hs-special">)</span><span>
+</span><span id="line-43"></span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Navi.Services.Custom.Multiple.html#toEvent"><span class="hs-pragma hs-type">toEvent</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-44"></span><span>
+</span><span id="line-45"></span><span class="annot"><a href="Navi.Services.Custom.Multiple.html#mkMultipleEvent"><span class="hs-identifier hs-type">mkMultipleEvent</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-46"></span><span>  </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Internal.html#Text"><span class="hs-identifier hs-type">Text</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-47"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Command</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-48"></span><span>  </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#NonEmpty"><span class="hs-identifier hs-type">NonEmpty</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Internal.html#Text"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Navi.Data.NaviNote.html#NaviNote"><span class="hs-identifier hs-type">NaviNote</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-49"></span><span>  </span><span class="annot"><a href="Navi.Data.PollInterval.html#PollInterval"><span class="hs-identifier hs-type">PollInterval</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-50"></span><span>  </span><span class="annot"><a href="Navi.Event.Types.html#RepeatEvent"><span class="hs-identifier hs-type">RepeatEvent</span></a></span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Internal.html#Text"><span class="hs-identifier hs-type">Text</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-51"></span><span>  </span><span class="annot"><a href="Navi.Event.Types.html#ErrorNote"><span class="hs-identifier hs-type">ErrorNote</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-52"></span><span>  </span><span class="annot"><a href="Navi.Event.Types.html#Event"><span class="hs-identifier hs-type">Event</span></a></span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Internal.html#Text"><span class="hs-identifier hs-type">Text</span></a></span><span>
+</span><span id="line-53"></span><span id="mkMultipleEvent"><span class="annot"><span class="annottext">mkMultipleEvent :: Maybe Text
+-&gt; Command
+-&gt; NonEmpty (Text, NaviNote)
+-&gt; PollInterval
+-&gt; RepeatEvent Text
+-&gt; ErrorNote
+-&gt; Event Text
+</span><a href="Navi.Services.Custom.Multiple.html#mkMultipleEvent"><span class="hs-identifier hs-var hs-var">mkMultipleEvent</span></a></span></span><span> </span><span id="local-6989586621679308360"><span class="annot"><span class="annottext">Maybe Text
+</span><a href="#local-6989586621679308360"><span class="hs-identifier hs-var">mname</span></a></span></span><span> </span><span id="local-6989586621679308359"><span class="annot"><span class="annottext">Command
+</span><a href="#local-6989586621679308359"><span class="hs-identifier hs-var">cmd</span></a></span></span><span> </span><span id="local-6989586621679308358"><span class="annot"><span class="annottext">NonEmpty (Text, NaviNote)
+</span><a href="#local-6989586621679308358"><span class="hs-identifier hs-var">noteList</span></a></span></span><span> </span><span id="local-6989586621679308357"><span class="annot"><span class="annottext">PollInterval
+</span><a href="#local-6989586621679308357"><span class="hs-identifier hs-var">pi</span></a></span></span><span> </span><span id="local-6989586621679308356"><span class="annot"><span class="annottext">RepeatEvent Text
+</span><a href="#local-6989586621679308356"><span class="hs-identifier hs-var">re</span></a></span></span><span> </span><span id="local-6989586621679308355"><span class="annot"><span class="annottext">ErrorNote
+</span><a href="#local-6989586621679308355"><span class="hs-identifier hs-var">en</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-54"></span><span>  </span><span class="annot"><a href="Navi.Event.Types.html#MkEvent"><span class="hs-identifier hs-type">MkEvent</span></a></span><span>
+</span><span id="line-55"></span><span>    </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">$sel:name:MkEvent :: Text
+</span><a href="Navi.Event.Types.html#%24sel%3Aname%3AMkEvent"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679308352"><span class="hs-identifier hs-var">name'</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-56"></span><span>      </span><span class="annot"><span class="annottext">$sel:serviceType:MkEvent :: ServiceType Text
+</span><a href="Navi.Event.Types.html#%24sel%3AserviceType%3AMkEvent"><span class="hs-identifier hs-var">serviceType</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Command -&gt; ServiceType Text
+</span><a href="Navi.Services.Types.html#Multiple"><span class="hs-identifier hs-var">Multiple</span></a></span><span> </span><span class="annot"><span class="annottext">Command
+</span><a href="#local-6989586621679308359"><span class="hs-identifier hs-var">cmd</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-57"></span><span>      </span><span class="annot"><span class="annottext">$sel:pollInterval:MkEvent :: PollInterval
+</span><a href="Navi.Event.Types.html#%24sel%3ApollInterval%3AMkEvent"><span class="hs-identifier hs-var">pollInterval</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PollInterval
+</span><a href="#local-6989586621679308357"><span class="hs-identifier hs-var">pi</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-58"></span><span>      </span><span class="annot"><span class="annottext">$sel:raiseAlert:MkEvent :: Text -&gt; Maybe NaviNote
+</span><a href="Navi.Event.Types.html#%24sel%3AraiseAlert%3AMkEvent"><span class="hs-identifier hs-var">raiseAlert</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall a b c. (a -&gt; b -&gt; c) -&gt; b -&gt; a -&gt; c
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#flip"><span class="hs-identifier hs-var">flip</span></a></span><span> </span><span class="annot"><span class="annottext">forall k a. Ord k =&gt; k -&gt; Map k a -&gt; Maybe a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/containers-0.6.5.1/src/Data.Map.Internal.html#lookup"><span class="hs-identifier hs-var">Map.lookup</span></a></span><span> </span><span class="annot"><span class="annottext">Map Text NaviNote
+</span><a href="#local-6989586621679308345"><span class="hs-identifier hs-var">noteMap</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-59"></span><span>      </span><span class="annot"><span class="annottext">$sel:repeatEvent:MkEvent :: RepeatEvent Text
+</span><a href="Navi.Event.Types.html#%24sel%3ArepeatEvent%3AMkEvent"><span class="hs-identifier hs-var">repeatEvent</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">RepeatEvent Text
+</span><a href="#local-6989586621679308356"><span class="hs-identifier hs-var">re</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-60"></span><span>      </span><span class="annot"><span class="annottext">$sel:errorNote:MkEvent :: ErrorNote
+</span><a href="Navi.Event.Types.html#%24sel%3AerrorNote%3AMkEvent"><span class="hs-identifier hs-var">errorNote</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ErrorNote
+</span><a href="#local-6989586621679308355"><span class="hs-identifier hs-var">en</span></a></span><span>
+</span><span id="line-61"></span><span>    </span><span class="hs-special">}</span><span>
+</span><span id="line-62"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-63"></span><span>    </span><span id="local-6989586621679308345"><span class="annot"><span class="annottext">noteMap :: Map Text NaviNote
+</span><a href="#local-6989586621679308345"><span class="hs-identifier hs-var hs-var">noteMap</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall k a. Ord k =&gt; [(k, a)] -&gt; Map k a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/containers-0.6.5.1/src/Data.Map.Strict.Internal.html#fromList"><span class="hs-identifier hs-var">Map.fromList</span></a></span><span> </span><span class="annot"><span class="annottext">forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. NonEmpty a -&gt; [a]
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Data.List.NonEmpty.html#toList"><span class="hs-identifier hs-var">NE.toList</span></a></span><span> </span><span class="annot"><span class="annottext">NonEmpty (Text, NaviNote)
+</span><a href="#local-6989586621679308358"><span class="hs-identifier hs-var">noteList</span></a></span><span>
+</span><span id="line-64"></span><span>    </span><span id="local-6989586621679308352"><span class="annot"><span class="annottext">name' :: Text
+</span><a href="#local-6989586621679308352"><span class="hs-identifier hs-var hs-var">name'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall a. a -&gt; Maybe a -&gt; a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Data.Maybe.html#fromMaybe"><span class="hs-identifier hs-var">fromMaybe</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;multiple&quot;</span></span><span> </span><span class="annot"><span class="annottext">Maybe Text
+</span><a href="#local-6989586621679308360"><span class="hs-identifier hs-var">mname</span></a></span><span>
+</span><span id="line-65"></span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Navi.Services.Custom.Multiple.html#mkMultipleEvent"><span class="hs-pragma hs-type">mkMultipleEvent</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-66"></span></pre></body></html>

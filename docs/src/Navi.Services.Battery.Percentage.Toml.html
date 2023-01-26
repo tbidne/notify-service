@@ -1,0 +1,205 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE TemplateHaskell #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE ViewPatterns #-}</span><span>
+</span><span id="line-4"></span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- | This module provides toml configuration for the battery percentage service.</span><span>
+</span><span id="line-6"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Navi.Services.Battery.Percentage.Toml</span><span>
+</span><span id="line-7"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Navi.Services.Battery.Percentage.Toml.html#BatteryPercentageToml"><span class="hs-identifier">BatteryPercentageToml</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><a href="Navi.Services.Battery.Percentage.Toml.html#BatteryPercentageNoteToml"><span class="hs-identifier">BatteryPercentageNoteToml</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-11"></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/sgvfmc97njjj54rz5cmlkhndh5cc9zb9-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html"><span class="hs-identifier">DBus.Notify</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/sgvfmc97njjj54rz5cmlkhndh5cc9zb9-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html#UrgencyLevel"><span class="hs-identifier">UrgencyLevel</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Data.NaviNote.html"><span class="hs-identifier">Navi.Data.NaviNote</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Data.NaviNote.html#Timeout"><span class="hs-identifier">Timeout</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Navi.Data.NaviNote.html#timeoutOptDecoder"><span class="hs-identifier">timeoutOptDecoder</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Data.PollInterval.html"><span class="hs-identifier">Navi.Data.PollInterval</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Data.PollInterval.html#PollInterval"><span class="hs-identifier">PollInterval</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Navi.Data.PollInterval.html#pollIntervalOptDecoder"><span class="hs-identifier">pollIntervalOptDecoder</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Event.Toml.html"><span class="hs-identifier">Navi.Event.Toml</span></a></span><span>
+</span><span id="line-16"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Navi.Event.Toml.html#ErrorNoteToml"><span class="hs-identifier">ErrorNoteToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>    </span><span class="annot"><a href="Navi.Event.Toml.html#RepeatEventToml"><span class="hs-identifier">RepeatEventToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>    </span><span class="annot"><a href="Navi.Event.Toml.html#errorNoteOptDecoder"><span class="hs-identifier">errorNoteOptDecoder</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>    </span><span class="annot"><a href="Navi.Event.Toml.html#repeatEventOptDecoder"><span class="hs-identifier">repeatEventOptDecoder</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Prelude.html"><span class="hs-identifier">Navi.Prelude</span></a></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Services.Battery.Common.html"><span class="hs-identifier">Navi.Services.Battery.Common</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Services.Battery.Common.html#batteryAppDecoder"><span class="hs-identifier">batteryAppDecoder</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Navi.Utils.html"><span class="hs-identifier">Navi.Utils</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Navi.Utils.html#urgencyLevelOptDecoder"><span class="hs-identifier">urgencyLevelOptDecoder</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Numeric.Data.Interval</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Interval</span></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Pythia.Services.Battery</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">BatteryApp</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">Percentage</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span>
+</span><span id="line-27"></span><span class="hs-comment">-- | TOML for each individual battery percentage.</span><span>
+</span><span id="line-28"></span><span class="hs-keyword">data</span><span> </span><span id="BatteryPercentageNoteToml"><span class="annot"><a href="Navi.Services.Battery.Percentage.Toml.html#BatteryPercentageNoteToml"><span class="hs-identifier hs-var">BatteryPercentageNoteToml</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkBatteryPercentageNoteToml"><span class="annot"><a href="Navi.Services.Battery.Percentage.Toml.html#MkBatteryPercentageNoteToml"><span class="hs-identifier hs-var">MkBatteryPercentageNoteToml</span></a></span></span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="hs-comment">-- | The percentage for this alert.</span><span>
+</span><span id="line-30"></span><span>    </span><span id="%24sel%3Apercentage%3AMkBatteryPercentageNoteToml"><span class="annot"><span class="annottext">BatteryPercentageNoteToml -&gt; Percentage
+</span><a href="Navi.Services.Battery.Percentage.Toml.html#%24sel%3Apercentage%3AMkBatteryPercentageNoteToml"><span class="hs-identifier hs-var hs-var">percentage</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Percentage</span></span><span class="hs-special">,</span><span>
+</span><span id="line-31"></span><span>    </span><span class="hs-comment">-- | The urgency for this alert.</span><span>
+</span><span id="line-32"></span><span>    </span><span id="%24sel%3Aurgency%3AMkBatteryPercentageNoteToml"><span class="annot"><span class="annottext">BatteryPercentageNoteToml -&gt; Maybe UrgencyLevel
+</span><a href="Navi.Services.Battery.Percentage.Toml.html#%24sel%3Aurgency%3AMkBatteryPercentageNoteToml"><span class="hs-identifier hs-var hs-var">urgency</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="file:///nix/store/sgvfmc97njjj54rz5cmlkhndh5cc9zb9-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html#UrgencyLevel"><span class="hs-identifier hs-type">UrgencyLevel</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-33"></span><span>    </span><span class="hs-comment">-- | The timeout for this alert.</span><span>
+</span><span id="line-34"></span><span>    </span><span id="%24sel%3AmTimeout%3AMkBatteryPercentageNoteToml"><span class="annot"><span class="annottext">BatteryPercentageNoteToml -&gt; Maybe Timeout
+</span><a href="Navi.Services.Battery.Percentage.Toml.html#%24sel%3AmTimeout%3AMkBatteryPercentageNoteToml"><span class="hs-identifier hs-var hs-var">mTimeout</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="Navi.Data.NaviNote.html#Timeout"><span class="hs-identifier hs-type">Timeout</span></a></span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-36"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679309233"><span id="local-6989586621679309242"><span class="annot"><span class="annottext">BatteryPercentageNoteToml -&gt; BatteryPercentageNoteToml -&gt; Bool
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: BatteryPercentageNoteToml -&gt; BatteryPercentageNoteToml -&gt; Bool
+$c/= :: BatteryPercentageNoteToml -&gt; BatteryPercentageNoteToml -&gt; Bool
+== :: BatteryPercentageNoteToml -&gt; BatteryPercentageNoteToml -&gt; Bool
+$c== :: BatteryPercentageNoteToml -&gt; BatteryPercentageNoteToml -&gt; Bool
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Classes.html#Eq"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></a></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679309215"><span id="local-6989586621679309217"><span id="local-6989586621679309228"><span class="annot"><span class="annottext">Int -&gt; BatteryPercentageNoteToml -&gt; ShowS
+[BatteryPercentageNoteToml] -&gt; ShowS
+BatteryPercentageNoteToml -&gt; String
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [BatteryPercentageNoteToml] -&gt; ShowS
+$cshowList :: [BatteryPercentageNoteToml] -&gt; ShowS
+show :: BatteryPercentageNoteToml -&gt; String
+$cshow :: BatteryPercentageNoteToml -&gt; String
+showsPrec :: Int -&gt; BatteryPercentageNoteToml -&gt; ShowS
+$cshowsPrec :: Int -&gt; BatteryPercentageNoteToml -&gt; ShowS
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Show.html#Show"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></a></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span id="local-6989586621679309197"><span id="local-6989586621679309202"><span id="local-6989586621679309207"><span id="local-6989586621679309348"><span id="local-6989586621679309349"><span id="local-6989586621679309350"><span id="local-6989586621679309351"><span id="local-6989586621679309352"><span id="local-6989586621679309353"><span id="local-6989586621679309354"><span id="local-6989586621679309355"><span id="local-6989586621679309356"><span class="hs-identifier">makeFieldLabelsNoPrefix</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">BatteryPercentageNoteToml</span></span></span></span></span></span></span></span></span></span></span></span></span><span>
+</span><span id="line-39"></span><span>
+</span><span id="line-40"></span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-41"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Navi.Services.Battery.Percentage.Toml.html#BatteryPercentageNoteToml"><span class="hs-identifier hs-type">BatteryPercentageNoteToml</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-42"></span><span>  </span><span id="local-6989586621679309149"><span class="annot"><span class="annottext">tomlDecoder :: Decoder BatteryPercentageNoteToml
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-43"></span><span>    </span><span class="annot"><span class="annottext">Percentage
+-&gt; Maybe UrgencyLevel -&gt; Maybe Timeout -&gt; BatteryPercentageNoteToml
+</span><a href="Navi.Services.Battery.Percentage.Toml.html#MkBatteryPercentageNoteToml"><span class="hs-identifier hs-var">MkBatteryPercentageNoteToml</span></a></span><span>
+</span><span id="line-44"></span><span>      </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Data.Functor.html#%3C%24%3E"><span class="hs-operator hs-var">&lt;$&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder Percentage
+</span><a href="Navi.Services.Battery.Percentage.Toml.html#percentageDecoder"><span class="hs-identifier hs-var">percentageDecoder</span></a></span><span>
+</span><span id="line-45"></span><span>      </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%3C%2A%3E"><span class="hs-operator hs-var">&lt;*&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (Maybe UrgencyLevel)
+</span><a href="Navi.Utils.html#urgencyLevelOptDecoder"><span class="hs-identifier hs-var">urgencyLevelOptDecoder</span></a></span><span>
+</span><span id="line-46"></span><span>      </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%3C%2A%3E"><span class="hs-operator hs-var">&lt;*&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (Maybe Timeout)
+</span><a href="Navi.Data.NaviNote.html#timeoutOptDecoder"><span class="hs-identifier hs-var">timeoutOptDecoder</span></a></span><span>
+</span><span id="line-47"></span><span>
+</span><span id="line-48"></span><span class="annot"><a href="Navi.Services.Battery.Percentage.Toml.html#percentageDecoder"><span class="hs-identifier hs-type">percentageDecoder</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#Decoder"><span class="hs-identifier hs-type">Decoder</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Percentage</span></span><span>
+</span><span id="line-49"></span><span id="percentageDecoder"><span class="annot"><span class="annottext">percentageDecoder :: Decoder Percentage
+</span><a href="Navi.Services.Battery.Percentage.Toml.html#percentageDecoder"><span class="hs-identifier hs-var hs-var">percentageDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall a. Decoder a -&gt; Text -&gt; Decoder a
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#getFieldWith"><span class="hs-identifier hs-var">getFieldWith</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder Percentage
+</span><a href="#local-6989586621679309144"><span class="hs-identifier hs-var">decoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;percent&quot;</span></span><span>
+</span><span id="line-50"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-51"></span><span>    </span><span id="local-6989586621679309144"><span class="annot"><span class="annottext">decoder :: Decoder Percentage
+</span><a href="#local-6989586621679309144"><span class="hs-identifier hs-var hs-var">decoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-52"></span><span>      </span><span class="annot"><span class="annottext">forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%3E%3E%3D"><span class="hs-operator hs-var">&gt;&gt;=</span></a></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679309132"><span class="annot"><span class="annottext">Word8
+</span><a href="#local-6989586621679309132"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-53"></span><span>        </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Maybe Percentage
+</span><a href="#local-6989586621679309131"><span class="hs-identifier hs-var">mkPercentage</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><a href="#local-6989586621679309132"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-54"></span><span>          </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Just"><span class="hs-identifier hs-type">Just</span></a></span><span> </span><span id="local-6989586621679309130"><span class="annot"><span class="annottext">Percentage
+</span><a href="#local-6989586621679309130"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#pure"><span class="hs-identifier hs-var">pure</span></a></span><span> </span><span class="annot"><span class="annottext">Percentage
+</span><a href="#local-6989586621679309130"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-55"></span><span>          </span><span class="annot"><span class="annottext">Maybe Percentage
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Nothing"><span class="hs-identifier hs-var">Nothing</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-56"></span><span>            </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a. MonadFail m =&gt; String -&gt; m a
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Control.Monad.Fail.html#fail"><span class="hs-identifier hs-var">fail</span></a></span><span> </span><span class="annot"><span class="annottext">forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span>
+</span><span id="line-57"></span><span>              </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Show.html#unpack"><span class="hs-identifier hs-var">unpack</span></a></span><span> </span><span class="annot"><span class="annottext">forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span>
+</span><span id="line-58"></span><span>                </span><span class="annot"><span class="annottext">[Text] -&gt; Text
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.html#concat"><span class="hs-identifier hs-var">concat</span></a></span><span>
+</span><span id="line-59"></span><span>                  </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Unexpected percent: &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-60"></span><span>                    </span><span class="annot"><span class="annottext">forall a. Show a =&gt; a -&gt; Text
+</span><a href="Navi.Prelude.html#showt"><span class="hs-identifier hs-var">showt</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><a href="#local-6989586621679309132"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-61"></span><span>                    </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;. Expected integer in [0, 100].&quot;</span></span><span>
+</span><span id="line-62"></span><span>                  </span><span class="hs-special">]</span><span>
+</span><span id="line-63"></span><span>    </span><span id="local-6989586621679309131"><span class="annot"><span class="annottext">mkPercentage :: Word8 -&gt; Maybe Percentage
+</span><a href="#local-6989586621679309131"><span class="hs-identifier hs-var hs-var">mkPercentage</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#fmap"><span class="hs-identifier hs-var">fmap</span></a></span><span> </span><span class="annot"><span class="annottext">LRInterval 0 100 Word8 -&gt; Percentage
+</span><span class="hs-identifier hs-var">MkPercentage</span></span><span> </span><span class="annot"><span class="annottext">forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#."><span class="hs-operator hs-var">.</span></a></span><span> </span><span class="annot"><span class="annottext">forall (l :: Nat) (r :: Nat) a.
+(KnownNat l, KnownNat r, Num a, Ord a) =&gt;
+a -&gt; Maybe (LRInterval l r a)
+</span><span class="hs-identifier hs-var">Interval.mkLRInterval</span></span><span>
+</span><span id="line-64"></span><span>
+</span><span id="line-65"></span><span class="hs-comment">-- | TOML for the battery percentage service.</span><span>
+</span><span id="line-66"></span><span class="hs-keyword">data</span><span> </span><span id="BatteryPercentageToml"><span class="annot"><a href="Navi.Services.Battery.Percentage.Toml.html#BatteryPercentageToml"><span class="hs-identifier hs-var">BatteryPercentageToml</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkBatteryPercentageToml"><span class="annot"><a href="Navi.Services.Battery.Percentage.Toml.html#MkBatteryPercentageToml"><span class="hs-identifier hs-var">MkBatteryPercentageToml</span></a></span></span><span>
+</span><span id="line-67"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="hs-comment">-- | All alerts for this service.</span><span>
+</span><span id="line-68"></span><span>    </span><span id="%24sel%3Aalerts%3AMkBatteryPercentageToml"><span class="annot"><span class="annottext">BatteryPercentageToml -&gt; NonEmpty BatteryPercentageNoteToml
+</span><a href="Navi.Services.Battery.Percentage.Toml.html#%24sel%3Aalerts%3AMkBatteryPercentageToml"><span class="hs-identifier hs-var hs-var">alerts</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#NonEmpty"><span class="hs-identifier hs-type">NonEmpty</span></a></span><span> </span><span class="annot"><a href="Navi.Services.Battery.Percentage.Toml.html#BatteryPercentageNoteToml"><span class="hs-identifier hs-type">BatteryPercentageNoteToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-69"></span><span>    </span><span class="hs-comment">-- | The poll interval.</span><span>
+</span><span id="line-70"></span><span>    </span><span id="%24sel%3ApollInterval%3AMkBatteryPercentageToml"><span class="annot"><span class="annottext">BatteryPercentageToml -&gt; Maybe PollInterval
+</span><a href="Navi.Services.Battery.Percentage.Toml.html#%24sel%3ApollInterval%3AMkBatteryPercentageToml"><span class="hs-identifier hs-var hs-var">pollInterval</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="Navi.Data.PollInterval.html#PollInterval"><span class="hs-identifier hs-type">PollInterval</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-71"></span><span>    </span><span class="hs-comment">-- | Determines how we treat repeat alerts.</span><span>
+</span><span id="line-72"></span><span>    </span><span id="%24sel%3ArepeatEvent%3AMkBatteryPercentageToml"><span class="annot"><span class="annottext">BatteryPercentageToml -&gt; Maybe RepeatEventToml
+</span><a href="Navi.Services.Battery.Percentage.Toml.html#%24sel%3ArepeatEvent%3AMkBatteryPercentageToml"><span class="hs-identifier hs-var hs-var">repeatEvent</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="Navi.Event.Toml.html#RepeatEventToml"><span class="hs-identifier hs-type">RepeatEventToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-73"></span><span>    </span><span class="hs-comment">-- | Determines how we handle errors.</span><span>
+</span><span id="line-74"></span><span>    </span><span id="%24sel%3AerrorNote%3AMkBatteryPercentageToml"><span class="annot"><span class="annottext">BatteryPercentageToml -&gt; Maybe ErrorNoteToml
+</span><a href="Navi.Services.Battery.Percentage.Toml.html#%24sel%3AerrorNote%3AMkBatteryPercentageToml"><span class="hs-identifier hs-var hs-var">errorNote</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="Navi.Event.Toml.html#ErrorNoteToml"><span class="hs-identifier hs-type">ErrorNoteToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-75"></span><span>    </span><span class="hs-comment">-- | Determines how we should query the system for battery information.</span><span>
+</span><span id="line-76"></span><span>    </span><span id="%24sel%3Aapp%3AMkBatteryPercentageToml"><span class="annot"><span class="annottext">BatteryPercentageToml -&gt; BatteryApp
+</span><a href="Navi.Services.Battery.Percentage.Toml.html#%24sel%3Aapp%3AMkBatteryPercentageToml"><span class="hs-identifier hs-var hs-var">app</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">BatteryApp</span></span><span>
+</span><span id="line-77"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-78"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679309095"><span id="local-6989586621679309108"><span class="annot"><span class="annottext">BatteryPercentageToml -&gt; BatteryPercentageToml -&gt; Bool
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: BatteryPercentageToml -&gt; BatteryPercentageToml -&gt; Bool
+$c/= :: BatteryPercentageToml -&gt; BatteryPercentageToml -&gt; Bool
+== :: BatteryPercentageToml -&gt; BatteryPercentageToml -&gt; Bool
+$c== :: BatteryPercentageToml -&gt; BatteryPercentageToml -&gt; Bool
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Classes.html#Eq"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></a></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679309074"><span id="local-6989586621679309076"><span id="local-6989586621679309090"><span class="annot"><span class="annottext">Int -&gt; BatteryPercentageToml -&gt; ShowS
+[BatteryPercentageToml] -&gt; ShowS
+BatteryPercentageToml -&gt; String
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [BatteryPercentageToml] -&gt; ShowS
+$cshowList :: [BatteryPercentageToml] -&gt; ShowS
+show :: BatteryPercentageToml -&gt; String
+$cshow :: BatteryPercentageToml -&gt; String
+showsPrec :: Int -&gt; BatteryPercentageToml -&gt; ShowS
+$cshowsPrec :: Int -&gt; BatteryPercentageToml -&gt; ShowS
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Show.html#Show"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></a></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-79"></span><span>
+</span><span id="line-80"></span><span id="local-6989586621679309046"><span id="local-6989586621679309051"><span id="local-6989586621679309056"><span id="local-6989586621679309061"><span id="local-6989586621679309066"><span id="local-6989586621679309272"><span id="local-6989586621679309273"><span id="local-6989586621679309274"><span id="local-6989586621679309275"><span id="local-6989586621679309276"><span id="local-6989586621679309277"><span id="local-6989586621679309278"><span id="local-6989586621679309279"><span id="local-6989586621679309280"><span id="local-6989586621679309281"><span id="local-6989586621679309282"><span id="local-6989586621679309283"><span id="local-6989586621679309284"><span id="local-6989586621679309285"><span id="local-6989586621679309286"><span class="hs-identifier">makeFieldLabelsNoPrefix</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">BatteryPercentageToml</span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span><span>
+</span><span id="line-81"></span><span>
+</span><span id="line-82"></span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-83"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Navi.Services.Battery.Percentage.Toml.html#BatteryPercentageToml"><span class="hs-identifier hs-type">BatteryPercentageToml</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-84"></span><span>  </span><span id="local-6989586621679308963"><span class="annot"><span class="annottext">tomlDecoder :: Decoder BatteryPercentageToml
+</span><a href="#local-6989586621679308963"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-85"></span><span>    </span><span class="annot"><span class="annottext">NonEmpty BatteryPercentageNoteToml
+-&gt; Maybe PollInterval
+-&gt; Maybe RepeatEventToml
+-&gt; Maybe ErrorNoteToml
+-&gt; BatteryApp
+-&gt; BatteryPercentageToml
+</span><a href="Navi.Services.Battery.Percentage.Toml.html#MkBatteryPercentageToml"><span class="hs-identifier hs-var">MkBatteryPercentageToml</span></a></span><span>
+</span><span id="line-86"></span><span>      </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Data.Functor.html#%3C%24%3E"><span class="hs-operator hs-var">&lt;$&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. Decoder a -&gt; Text -&gt; Decoder a
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#getFieldWith"><span class="hs-identifier hs-var">getFieldWith</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;alert&quot;</span></span><span>
+</span><span id="line-87"></span><span>      </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%3C%2A%3E"><span class="hs-operator hs-var">&lt;*&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (Maybe PollInterval)
+</span><a href="Navi.Data.PollInterval.html#pollIntervalOptDecoder"><span class="hs-identifier hs-var">pollIntervalOptDecoder</span></a></span><span>
+</span><span id="line-88"></span><span>      </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%3C%2A%3E"><span class="hs-operator hs-var">&lt;*&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (Maybe RepeatEventToml)
+</span><a href="Navi.Event.Toml.html#repeatEventOptDecoder"><span class="hs-identifier hs-var">repeatEventOptDecoder</span></a></span><span>
+</span><span id="line-89"></span><span>      </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%3C%2A%3E"><span class="hs-operator hs-var">&lt;*&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (Maybe ErrorNoteToml)
+</span><a href="Navi.Event.Toml.html#errorNoteOptDecoder"><span class="hs-identifier hs-var">errorNoteOptDecoder</span></a></span><span>
+</span><span id="line-90"></span><span>      </span><span class="annot"><span class="annottext">forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%3C%2A%3E"><span class="hs-operator hs-var">&lt;*&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. Decoder a -&gt; Text -&gt; Decoder a
+</span><a href="file:///nix/store/36qaf136nx234p5vjalfwwdfbwv9bx2k-toml-reader-0.1.0.0-doc/share/doc/toml-reader-0.1.0.0/html/src/TOML.Decode.html#getFieldWith"><span class="hs-identifier hs-var">getFieldWith</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder BatteryApp
+</span><a href="Navi.Services.Battery.Common.html#batteryAppDecoder"><span class="hs-identifier hs-var">batteryAppDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;app&quot;</span></span><span>
+</span><span id="line-91"></span></pre></body></html>
